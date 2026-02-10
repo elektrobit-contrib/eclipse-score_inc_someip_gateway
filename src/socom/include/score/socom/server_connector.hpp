@@ -211,11 +211,6 @@ class Enabled_server_connector : public Configuration_getter {
     /// \return An event mode in case of successful operation, otherwise an error.
     [[nodiscard]] virtual Result<Event_mode> get_event_mode(Event_id server_id) const noexcept = 0;
 
-    [[nodiscard]]
-    virtual Server_service_interface_configuration const& get_configuration() const noexcept = 0;
-    [[nodiscard]]
-    virtual Service_instance const& get_service_instance() const noexcept = 0;
-
    protected:
     /// \cond INTERNAL
     virtual Disabled_server_connector* disable() noexcept = 0;
