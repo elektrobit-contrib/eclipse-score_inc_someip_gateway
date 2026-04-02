@@ -14,13 +14,10 @@
 name: Formatting checks
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize]
-  merge_group:
-    types: [checks_requested]
+  workflow_call:
 
 jobs:
   formatting-check:
-    uses: eclipse-score/cicd-workflows/.github/workflows/format.yml@main
+    uses: eclipse-score/cicd-workflows/.github/workflows/format.yml@2f846ffe7c6e64c790b1f66f5b504622cd03526e # main (2026-03-31)
     with:
       bazel-target: "test //:format.check" # optional, this is the default

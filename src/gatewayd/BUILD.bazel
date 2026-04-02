@@ -20,14 +20,15 @@ load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 load("@flatbuffers//:build_defs.bzl", "flatbuffer_cc_library")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("@score_communication//bazel/tools:json_schema_validator.bzl", "validate_json_schema_test")
 load("@score_someip_gateway//bazel/tools:someip_config.bzl", "generate_someip_config_bin", "validate_someip_config_test")
+load("//bazel/tools:json_schema_validator.bzl", "validate_json_schema_test")
 
 exports_files(
     [
         "etc/gatewayd_config.fbs",
         "etc/gatewayd_config.json",
         "etc/gatewayd_config.schema.json",
+        "etc/mw_com_config.json",
     ],
 )
 
@@ -62,7 +63,8 @@ cc_library(
     deps = [
         ":config_flatbuffers",
         "//src/network_service:consumer",
-        "//tests/performance_benchmarks:echo_service",
+        "//tests/benchmarks:echo_service",
+        "@score_baselibs//score/containers:non_relocatable_vector",
         "@score_communication//score/mw/com",
     ],
 )
@@ -76,6 +78,7 @@ generate_someip_config_bin(
     name = "config_file",
     json = "etc/gatewayd_config.json",
     output = "etc/gatewayd_config.bin",
+    visibility = ["//visibility:public"],
 )
 
 validate_json_schema_test(

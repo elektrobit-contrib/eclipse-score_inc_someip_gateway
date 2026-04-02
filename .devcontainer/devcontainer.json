@@ -1,6 +1,12 @@
 {
     "name": "eclipse-s-core",
-    "image": "ghcr.io/eclipse-score/devcontainer:v1.1.0",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "args": {
+            "USERNAME": "${localEnv:USER}"
+        }
+    },
+    "remoteUser": "${localEnv:USER}",
     "runArgs": [
         "--privileged"
     ],
@@ -12,13 +18,16 @@
         },
         {
             "source": "${localEnv:HOME}${localEnv:USERPROFILE}/.netrc",
-            "target": "/home/vscode/.netrc",
+            "target": "/home/${localEnv:USER}/.netrc",
             "type": "bind"
         }
     ],
     "initializeCommand": {
-        "Make sure QNX licenses exists": "touch -a ~/.qnx/license/licenses",
+        "Make sure QNX licenses exists": "mkdir -p ~/.qnx/license && touch -a ~/.qnx/license/licenses",
         "Make sure .netrc exists": "touch -a ~/.netrc"
+    },
+    "onCreateCommand": {
+        "Setup external symlink": "[ -L external ] || ln -s \"bazel-$(basename $PWD)/external\" external"
     },
     "customizations": {
         "vscode": {

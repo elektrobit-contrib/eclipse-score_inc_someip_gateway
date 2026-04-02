@@ -13,12 +13,9 @@
 
 name: Copyright checks
 on:
-  pull_request:
-    types: [opened, reopened, synchronize]
-  merge_group:
-    types: [checks_requested]
+  workflow_call:
 jobs:
   copyright-check:
-    uses: eclipse-score/cicd-workflows/.github/workflows/copyright.yml@main
+    uses: eclipse-score/cicd-workflows/.github/workflows/copyright.yml@2f846ffe7c6e64c790b1f66f5b504622cd03526e # main (2026-03-31)
     with:
       bazel-target: "run //:copyright.check"

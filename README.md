@@ -1,3 +1,17 @@
+<!--
+*******************************************************************************
+Copyright (c) 2026 Contributors to the Eclipse Foundation
+
+See the NOTICE file(s) distributed with this work for additional
+information regarding copyright ownership.
+
+This program and the accompanying materials are made available under the
+terms of the Apache License Version 2.0 which is available at
+https://www.apache.org/licenses/LICENSE-2.0
+
+SPDX-License-Identifier: Apache-2.0
+*******************************************************************************
+-->
 
 # SOME/IP Gateway
 
@@ -73,7 +87,7 @@ docker exec -it --env VSOMEIP_CONFIGURATION=/home/source/tests/integration/sampl
 Finally start the benchmark on the someipd-1 container in a third shell:
 
 ```sh
-docker exec -it docker_setup-someipd-1 /home/source/bazel-bin/tests/performance_benchmarks/ipc_benchmarks
+docker exec -it docker_setup-someipd-1 /home/source/bazel-bin/tests/benchmarks/ipc_benchmarks
 ```
 
 
