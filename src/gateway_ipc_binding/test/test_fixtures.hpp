@@ -85,9 +85,10 @@ class Gateway_ipc_binding_unconnected_integration_test : public ::testing::Test,
         Shared_memory_manager_factory::Shared_memory_configuration shm_config,
         Find_service_elements find_service_elements = {}) {
         score::message_passing::UnixDomainClientFactory client_factory;
+        auto connection = client_factory.Create(protocol_config, client_config);
         auto client_result = Gateway_ipc_binding_client::create(
-            runtime, client_factory, protocol_config, client_config,
-            Shared_memory_manager_factory::create(shm_config), std::move(find_service_elements));
+            runtime, std::move(connection), Shared_memory_manager_factory::create(shm_config),
+            std::move(find_service_elements));
 
         if (!client_result) {
             throw std::runtime_error("Failed to create client: " +

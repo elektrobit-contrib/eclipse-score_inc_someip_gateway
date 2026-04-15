@@ -14,13 +14,13 @@
 #ifndef SRC_GATEWAY_IPC_BINDING_INCLUDE_SCORE_GATEWAY_IPC_BINDING_GATEWAY_IPC_BINDING_CLIENT
 #define SRC_GATEWAY_IPC_BINDING_INCLUDE_SCORE_GATEWAY_IPC_BINDING_GATEWAY_IPC_BINDING_CLIENT
 
-#include <score/message_passing/i_client_factory.h>
-#include <score/message_passing/service_protocol_config.h>
+#include <score/message_passing/i_client_connection.h>
 #include <score/result/result.h>
 
 #include <memory>
 #include <score/gateway_ipc_binding/gateway_ipc_binding.hpp>
 #include <score/gateway_ipc_binding/shared_memory_slot_manager.hpp>
+#include <score/memory.hpp>
 #include <score/socom/runtime.hpp>
 
 namespace score::gateway_ipc_binding {
@@ -40,16 +40,13 @@ class Gateway_ipc_binding_client {
    public:
     /// \brief Create the client-side IPC binding endpoint
     /// \param runtime SOCom runtime used to register the binding as a service bridge
-    /// \param factory Factory used to create the underlying client connection
-    /// \param protocol_config `score::message_passing` protocol configuration
-    /// \param client_config connection configuration for the client transport
+    /// \param connection pre-created client transport connection
     /// \param slot_manager factory for per-service writable and read-only shared memory managers
     /// \param find_service_elements Service elements to advertise for finding services
     /// \return Unique pointer to the created client or an error
     static Result<std::unique_ptr<Gateway_ipc_binding_client>> create(
-        score::socom::Runtime& runtime, score::message_passing::IClientFactory& factory,
-        score::message_passing::ServiceProtocolConfig protocol_config,
-        score::message_passing::IClientFactory::ClientConfig client_config,
+        score::socom::Runtime& runtime,
+        score::cpp::pmr::unique_ptr<score::message_passing::IClientConnection> connection,
         score::gateway_ipc_binding::Shared_memory_manager_factory::Uptr slot_manager,
         Find_service_elements find_service_elements = {}) noexcept;
 

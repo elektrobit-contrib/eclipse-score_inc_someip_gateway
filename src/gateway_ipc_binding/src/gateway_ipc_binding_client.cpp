@@ -138,16 +138,13 @@ class Gateway_ipc_binding_client_impl : public Gateway_ipc_binding_client, publi
 }  // namespace
 
 Result<std::unique_ptr<Gateway_ipc_binding_client>> Gateway_ipc_binding_client::create(
-    score::socom::Runtime& runtime, score::message_passing::IClientFactory& factory,
-    score::message_passing::ServiceProtocolConfig protocol_config,
-    score::message_passing::IClientFactory::ClientConfig client_config,
+    score::socom::Runtime& runtime,
+    score::cpp::pmr::unique_ptr<score::message_passing::IClientConnection> connection,
     Shared_memory_manager_factory::Uptr slot_manager,
     Find_service_elements find_service_elements) noexcept {
-    auto connection = factory.Create(protocol_config, client_config);
-
     if (!connection) {
         return MakeUnexpected(Bidirectional_channel_error::runtime_error_not_connected,
-                              "Failed to create client connection");
+                              "Client connection is not available");
     }
 
     return std::make_unique<Gateway_ipc_binding_client_impl>(

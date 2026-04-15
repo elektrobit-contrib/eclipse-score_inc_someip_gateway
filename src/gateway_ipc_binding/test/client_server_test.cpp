@@ -84,11 +84,11 @@ class Gateway_ipc_binding_unconnected_test : public ::testing::Test, protected T
 
         // Create gateway IPC binding client
         score::message_passing::UnixDomainClientFactory client_factory;
+        auto connection = client_factory.Create(protocol_config, client_config);
         auto mock_client_factory =
             create_mock_unique_ptr(mock_client_shared_memory_manager_factory);
-        auto client_result =
-            Gateway_ipc_binding_client::create(*runtime_client, client_factory, protocol_config,
-                                               client_config, std::move(mock_client_factory));
+        auto client_result = Gateway_ipc_binding_client::create(
+            *runtime_client, std::move(connection), std::move(mock_client_factory));
 
         if (!client_result) {
             throw std::runtime_error("Failed to create client: " +
