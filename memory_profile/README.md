@@ -137,6 +137,19 @@ bazel build //src/gateway_ipc_binding/benchmark:gateway_ipc_binding_benchmark -c
   --benchmark_min_time=0.02s
 ```
 
+### Run Massif (valgrind) and Always Get massif.out
+```bash
+# Builds benchmark if needed, runs massif with child exec tracing,
+# and writes memory_profile/massif.out plus PID-suffixed raw output.
+./memory_profile/run_massif_gateway_benchmark.sh --benchmark_min_time=0.02s
+
+# Optional: visualize the stable output file
+ms_print memory_profile/massif.out | less
+```
+
+Note: This benchmark re-execs internally. Without `--trace-children=yes`,
+valgrind may print benchmark output but not emit a Massif file.
+
 ## Related Files
 
 - Benchmark source: `src/gateway_ipc_binding/benchmark/event_transmission_client_to_server_benchmark.cpp`
