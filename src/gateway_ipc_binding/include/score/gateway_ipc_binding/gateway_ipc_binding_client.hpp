@@ -22,6 +22,7 @@
 #include <score/gateway_ipc_binding/shared_memory_slot_manager.hpp>
 #include <score/memory.hpp>
 #include <score/socom/runtime.hpp>
+#include <string_view>
 
 namespace score::gateway_ipc_binding {
 
@@ -43,12 +44,14 @@ class Gateway_ipc_binding_client {
     /// \param connection pre-created client transport connection
     /// \param slot_manager factory for per-service writable and read-only shared memory managers
     /// \param find_service_elements Service elements to advertise for finding services
+    /// \param identifier Optional string identifying this client peer to the server
     /// \return Unique pointer to the created client
     static std::unique_ptr<Gateway_ipc_binding_client> create(
         score::socom::Runtime& runtime,
         score::cpp::pmr::unique_ptr<score::message_passing::IClientConnection> connection,
         score::gateway_ipc_binding::Shared_memory_manager_factory::Uptr slot_manager,
-        Find_service_elements find_service_elements = {}) noexcept;
+        Find_service_elements find_service_elements = {},
+        std::string_view identifier = {}) noexcept;
 
     /// \brief Virtual destructor
     virtual ~Gateway_ipc_binding_client() = default;

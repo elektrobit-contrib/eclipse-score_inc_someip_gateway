@@ -105,6 +105,7 @@ class Gateway_ipc_binding_server_impl : public Gateway_ipc_binding_server {
                 m_binding_base.remove_client(client_id);
                 std::lock_guard<std::mutex> const lock(m_mutex);
                 m_connections.erase(client_id);
+                m_client_identifiers.erase(client_id);
 
                 auto const find_it = m_find_service_elements_by_client.find(client_id);
                 if (find_it != m_find_service_elements_by_client.end()) {
@@ -133,6 +134,8 @@ class Gateway_ipc_binding_server_impl : public Gateway_ipc_binding_server {
                 auto const& msg = **msg_opt;
                 std::lock_guard<std::mutex> const lock(m_mutex);
 
+                m_client_identifiers[client_id] = fixed_string_to_string(msg.identifier);
+
                 if (!msg.find_service_elements.empty()) {
                     m_on_find_service_change(client_id, msg.find_service_elements, true);
                     m_find_service_elements_by_client[client_id] = msg.find_service_elements;
@@ -159,13 +162,19 @@ class Gateway_ipc_binding_server_impl : public Gateway_ipc_binding_server {
         return {};
     }
 
+    std::unordered_map<Client_id, std::string> get_client_identifiers() const noexcept override {
+        std::lock_guard<std::mutex> const lock(m_mutex);
+        return m_client_identifiers;
+    }
+
    private:
     Id_generator<Client_id> m_next_client_id{0};
     bool m_listening{false};
     score::cpp::pmr::unique_ptr<score::message_passing::IServer> m_server;
     std::unordered_map<Client_id, Server_reply_channel> m_connections;
-    std::mutex m_mutex;  // Protects m_listening, m_next_client_id, m_connections
+    mutable std::mutex m_mutex;  // Protects m_listening, m_next_client_id, m_connections
     std::unordered_map<Client_id, Find_service_elements> m_find_service_elements_by_client;
+    std::unordered_map<Client_id, std::string> m_client_identifiers;
     Gateway_ipc_binding_server::On_find_service_change m_on_find_service_change;
     Gateway_ipc_binding_base m_binding_base;
 };

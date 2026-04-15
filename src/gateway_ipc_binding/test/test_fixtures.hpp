@@ -33,7 +33,7 @@
 #include <score/socom/server_connector.hpp>
 #include <score/socom/server_connector_mock.hpp>
 #include <score/socom/vector_payload.hpp>
-#include <string>
+#include <string_view>
 #include <thread>
 #include <utility>
 
@@ -78,12 +78,12 @@ class Gateway_ipc_binding_unconnected_integration_test : public ::testing::Test,
     std::unique_ptr<Gateway_ipc_binding_client> create_ipc_client(
         socom::Runtime& runtime,
         Shared_memory_manager_factory::Shared_memory_configuration shm_config,
-        Find_service_elements find_service_elements = {}) {
+        Find_service_elements find_service_elements = {}, std::string_view identifier = {}) {
         score::message_passing::UnixDomainClientFactory client_factory;
         auto connection = client_factory.Create(protocol_config, client_config);
         auto client = Gateway_ipc_binding_client::create(
             runtime, std::move(connection), Shared_memory_manager_factory::create(shm_config),
-            std::move(find_service_elements));
+            std::move(find_service_elements), identifier);
 
         assert(client && "Client creation failed");
         return client;

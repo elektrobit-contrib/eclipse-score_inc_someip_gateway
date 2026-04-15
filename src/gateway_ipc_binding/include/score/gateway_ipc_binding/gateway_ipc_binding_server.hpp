@@ -24,6 +24,8 @@
 #include <score/gateway_ipc_binding/gateway_ipc_binding.hpp>
 #include <score/gateway_ipc_binding/shared_memory_slot_manager.hpp>
 #include <score/socom/runtime.hpp>
+#include <string>
+#include <unordered_map>
 
 namespace score::gateway_ipc_binding {
 
@@ -60,6 +62,13 @@ class Gateway_ipc_binding_server {
     /// \brief Start listening for incoming IPC connections
     /// \return Success or error if the transport could not start or is already listening
     virtual Result<void> start() noexcept = 0;
+
+    /// \brief Returns the identifiers of all currently connected clients
+    /// \details Maps each connected client's `Client_id` to the identifier string it sent in
+    ///          the `Connect` message. Clients that did not supply an identifier have an empty
+    ///          string entry.
+    /// \return Map from Client_id to identifier string
+    virtual std::unordered_map<Client_id, std::string> get_client_identifiers() const noexcept = 0;
 
    protected:
     Gateway_ipc_binding_server() = default;

@@ -33,7 +33,8 @@ inline constexpr std::size_t kMax_service_id_size = 64U;
 
 /// \brief Maximum bytes for serialized instance id
 inline constexpr std::size_t kMax_instance_id_size = 64U;
-
+/// \brief Maximum bytes for client identifier string (including null terminator)
+inline constexpr std::size_t kMax_client_identifier_size = 64U;
 /// \brief Maximum shared memory path length (including null terminator)
 inline constexpr std::size_t kMax_shared_memory_path_size = 508U;
 
@@ -74,6 +75,9 @@ struct Service_hash {
 
 /// \brief Instance identifier in fixed-size form
 using Instance_id = Fixed_string<kMax_instance_id_size>;
+
+/// \brief Peer identifier string, sent by the client during Connect
+using Client_identifier = Fixed_string<kMax_client_identifier_size>;
 
 Service make_service(score::socom::Service_interface_identifier const& interface) noexcept;
 
@@ -135,6 +139,7 @@ struct Connect {
     DECLARE_MESSAGE_TYPE(Message_type::Connect);
 
     Find_service_elements find_service_elements;
+    Client_identifier identifier;
 };
 
 /// \brief Initial IPC connection acknowledgement
@@ -238,6 +243,7 @@ struct Event_update_request {
 };
 
 static_assert(std::is_trivially_copyable_v<Fixed_string<kMax_service_id_size>>);
+static_assert(std::is_trivially_copyable_v<Client_identifier>);
 static_assert(std::is_trivially_copyable_v<Service>);
 static_assert(std::is_trivially_copyable_v<Shared_memory_handle>);
 static_assert(std::is_trivially_copyable_v<Shared_memory_metadata>);
