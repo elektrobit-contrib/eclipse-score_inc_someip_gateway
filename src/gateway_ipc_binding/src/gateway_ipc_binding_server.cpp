@@ -173,15 +173,13 @@ class Gateway_ipc_binding_server_impl : public Gateway_ipc_binding_server {
 }  // namespace
 
 Result<std::unique_ptr<Gateway_ipc_binding_server>> Gateway_ipc_binding_server::create(
-    score::socom::Runtime& runtime, score::message_passing::IServerFactory& factory,
-    score::message_passing::ServiceProtocolConfig protocol_config,
-    score::message_passing::IServerFactory::ServerConfig server_config,
+    score::socom::Runtime& runtime,
+    score::cpp::pmr::unique_ptr<score::message_passing::IServer> server,
     Shared_memory_manager_factory::Uptr slot_manager,
     On_find_service_change on_find_service_change) noexcept {
-    auto server = factory.Create(protocol_config, server_config);
     if (!server) {
         return MakeUnexpected(Bidirectional_channel_error::runtime_error_listen_failed,
-                              "Failed to create server");
+                              "Server is null");
     }
 
     return Result<std::unique_ptr<Gateway_ipc_binding_server>>(

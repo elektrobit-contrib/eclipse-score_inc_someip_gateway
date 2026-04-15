@@ -66,13 +66,14 @@ class Gateway_ipc_binding_unconnected_test : public ::testing::Test, protected T
         }
 
         score::message_passing::UnixDomainServerFactory server_factory;
+        auto ipc_server = server_factory.Create(protocol_config, server_config);
         auto mock_server_factory =
             create_mock_unique_ptr(mock_server_shared_memory_manager_factory);
 
-        // Create gateway IPC binding server directly via message_passing factory
+        // Create gateway IPC binding server with pre-created IPC server
         auto server_result = Gateway_ipc_binding_server::create(
-            *runtime_server, server_factory, protocol_config, server_config,
-            std::move(mock_server_factory), [](auto, auto, bool) {});
+            *runtime_server, std::move(ipc_server), std::move(mock_server_factory),
+            [](auto, auto, bool) {});
 
         if (!server_result) {
             throw std::runtime_error("Failed to create server: " +

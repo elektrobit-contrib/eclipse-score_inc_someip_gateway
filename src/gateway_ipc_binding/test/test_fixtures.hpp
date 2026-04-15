@@ -64,11 +64,11 @@ class Gateway_ipc_binding_unconnected_integration_test : public ::testing::Test,
         socom::Runtime& runtime,
         Shared_memory_manager_factory::Shared_memory_configuration shm_config) {
         score::message_passing::UnixDomainServerFactory server_factory;
+        auto ipc_server = server_factory.Create(protocol_config, server_config);
 
-        // Create gateway IPC binding server directly via message_passing factory
+        // Create gateway IPC binding server with pre-created IPC server
         auto server_result = Gateway_ipc_binding_server::create(
-            runtime, server_factory, protocol_config, server_config,
-            Shared_memory_manager_factory::create(shm_config),
+            runtime, std::move(ipc_server), Shared_memory_manager_factory::create(shm_config),
             mock_on_find_service_change_cb.as_function());
 
         if (!server_result) {

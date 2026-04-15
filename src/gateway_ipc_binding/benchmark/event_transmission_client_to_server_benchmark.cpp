@@ -163,8 +163,10 @@ class Event_transmission_benchmark_context final {
             {interface_, {{instance_, client_shm_metadata_}}}};
 
         score::message_passing::UnixDomainServerFactory server_factory;
+        auto ipc_server = server_factory.Create(protocol_config_, server_config_);
+        assert(ipc_server);
         auto server_result = Gateway_ipc_binding_server::create(
-            *runtime_server_, server_factory, protocol_config_, server_config_,
+            *runtime_server_, std::move(ipc_server),
             Shared_memory_manager_factory::create(server_shm_config),
             [](auto, auto const&, auto) {});
         assert(server_result);
