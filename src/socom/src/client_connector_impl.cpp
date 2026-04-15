@@ -42,10 +42,14 @@ Impl::Impl(Runtime_impl& runtime, Service_interface_definition configuration,
 
 Impl::~Impl() noexcept {
     {
-        std::lock_guard<std::mutex> const lock{m_mutex};
-        m_stop_block_token.reset();
+        {
+            std::lock_guard<std::mutex> const lock{m_mutex};
+            m_stop_block_token.reset();
+            m_server.reset();
+        }
+        // triggers callback call. Actions which would be done by still active alive m_registration
+        // are stopped by already reset m_stop_block_token.
         m_registration.reset();
-        m_server.reset();
     }
 #ifdef WITH_SOCOM_DEADLOCK_DETECTION
 

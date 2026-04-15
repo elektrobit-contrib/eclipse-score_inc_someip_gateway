@@ -68,6 +68,9 @@ class Payload {
     /// \brief Retrieves the header data.
     /// \return Writable span of header data.
     [[nodiscard]] virtual Writable_span header() noexcept = 0;
+
+    // TODO only interface
+    [[nodiscard]] virtual std::size_t get_slot_handle() const noexcept { return 0; }
 };
 
 /// \brief An empty payload instance, which may be used as default value for the payload parameter.

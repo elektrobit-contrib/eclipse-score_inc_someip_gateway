@@ -1,0 +1,72 @@
+/********************************************************************************
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
+
+#ifndef SRC_GATEWAY_IPC_BINDING_INCLUDE_SCORE_GATEWAY_IPC_BINDING_GATEWAY_IPC_BINDING_CLIENT
+#define SRC_GATEWAY_IPC_BINDING_INCLUDE_SCORE_GATEWAY_IPC_BINDING_GATEWAY_IPC_BINDING_CLIENT
+
+#include <score/message_passing/i_client_factory.h>
+#include <score/message_passing/service_protocol_config.h>
+#include <score/result/result.h>
+
+#include <memory>
+#include <score/gateway_ipc_binding/gateway_ipc_binding.hpp>
+#include <score/gateway_ipc_binding/shared_memory_slot_manager.hpp>
+#include <score/socom/runtime.hpp>
+
+namespace score::gateway_ipc_binding {
+
+/// \brief Client-side transport endpoint for Gateway IPC Binding
+/// \details Owns one outgoing `score::message_passing` connection and forwards all
+///          Gateway IPC binding protocol handling into the shared binding base.
+///
+///          The concrete implementation starts the underlying IPC connection during
+///          construction. When the transport reaches `kReady`, it sends `Connect`
+///          automatically. The instance reports connected state only after a positive
+///          `Connect_reply` has been received.
+///
+///          After that initial handshake the client can both consume remote services and
+///          expose local services through the same shared bridge logic used by the server.
+class Gateway_ipc_binding_client {
+   public:
+    /// \brief Create the client-side IPC binding endpoint
+    /// \param runtime SOCom runtime used to register the binding as a service bridge
+    /// \param factory Factory used to create the underlying client connection
+    /// \param protocol_config `score::message_passing` protocol configuration
+    /// \param client_config connection configuration for the client transport
+    /// \param slot_manager factory for per-service writable and read-only shared memory managers
+    /// \param find_service_elements Service elements to advertise for finding services
+    /// \return Unique pointer to the created client or an error
+    static Result<std::unique_ptr<Gateway_ipc_binding_client>> create(
+        score::socom::Runtime& runtime, score::message_passing::IClientFactory& factory,
+        score::message_passing::ServiceProtocolConfig protocol_config,
+        score::message_passing::IClientFactory::ClientConfig client_config,
+        score::gateway_ipc_binding::Shared_memory_manager_factory::Uptr slot_manager,
+        Find_service_elements find_service_elements = {}) noexcept;
+
+    /// \brief Virtual destructor
+    virtual ~Gateway_ipc_binding_client() = default;
+
+    /// \brief Returns true after `Connect_reply{status=true}` has been received
+    virtual bool is_connected() const noexcept = 0;
+
+   protected:
+    Gateway_ipc_binding_client() = default;
+    Gateway_ipc_binding_client(Gateway_ipc_binding_client const&) = delete;
+    Gateway_ipc_binding_client& operator=(Gateway_ipc_binding_client const&) = delete;
+    Gateway_ipc_binding_client(Gateway_ipc_binding_client&&) = delete;
+    Gateway_ipc_binding_client& operator=(Gateway_ipc_binding_client&&) = delete;
+};
+
+}  // namespace score::gateway_ipc_binding
+
+#endif  // SRC_GATEWAY_IPC_BINDING_INCLUDE_SCORE_GATEWAY_IPC_BINDING_GATEWAY_IPC_BINDING_CLIENT
