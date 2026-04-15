@@ -172,20 +172,15 @@ class Gateway_ipc_binding_server_impl : public Gateway_ipc_binding_server {
 
 }  // namespace
 
-Result<std::unique_ptr<Gateway_ipc_binding_server>> Gateway_ipc_binding_server::create(
+std::unique_ptr<Gateway_ipc_binding_server> Gateway_ipc_binding_server::create(
     score::socom::Runtime& runtime,
     score::cpp::pmr::unique_ptr<score::message_passing::IServer> server,
     Shared_memory_manager_factory::Uptr slot_manager,
     On_find_service_change on_find_service_change) noexcept {
-    if (!server) {
-        return MakeUnexpected(Bidirectional_channel_error::runtime_error_listen_failed,
-                              "Server is null");
-    }
+    assert(server && "Server must not be null");
 
-    return Result<std::unique_ptr<Gateway_ipc_binding_server>>(
-        std::make_unique<Gateway_ipc_binding_server_impl>(runtime, std::move(slot_manager),
-                                                          std::move(on_find_service_change),
-                                                          std::move(server)));
+    return std::make_unique<Gateway_ipc_binding_server_impl>(
+        runtime, std::move(slot_manager), std::move(on_find_service_change), std::move(server));
 }
 
 }  // namespace score::gateway_ipc_binding

@@ -137,15 +137,12 @@ class Gateway_ipc_binding_client_impl : public Gateway_ipc_binding_client, publi
 
 }  // namespace
 
-Result<std::unique_ptr<Gateway_ipc_binding_client>> Gateway_ipc_binding_client::create(
+std::unique_ptr<Gateway_ipc_binding_client> Gateway_ipc_binding_client::create(
     score::socom::Runtime& runtime,
     score::cpp::pmr::unique_ptr<score::message_passing::IClientConnection> connection,
     Shared_memory_manager_factory::Uptr slot_manager,
     Find_service_elements find_service_elements) noexcept {
-    if (!connection) {
-        return MakeUnexpected(Bidirectional_channel_error::runtime_error_not_connected,
-                              "Client connection is not available");
-    }
+    assert(connection && "Connection must not be null");
 
     return std::make_unique<Gateway_ipc_binding_client_impl>(
         runtime, std::move(connection), std::move(slot_manager), std::move(find_service_elements));

@@ -165,21 +165,17 @@ class Event_transmission_benchmark_context final {
         score::message_passing::UnixDomainServerFactory server_factory;
         auto ipc_server = server_factory.Create(protocol_config_, server_config_);
         assert(ipc_server);
-        auto server_result = Gateway_ipc_binding_server::create(
+        gateway_server_ = Gateway_ipc_binding_server::create(
             *runtime_server_, std::move(ipc_server),
             Shared_memory_manager_factory::create(server_shm_config),
             [](auto, auto const&, auto) {});
-        assert(server_result);
-        gateway_server_ = std::move(server_result).value();
         assert(gateway_server_);
 
         score::message_passing::UnixDomainClientFactory client_factory;
         auto connection = client_factory.Create(protocol_config_, client_config_);
-        auto client_result = Gateway_ipc_binding_client::create(
+        gateway_client_ = Gateway_ipc_binding_client::create(
             *runtime_client_, std::move(connection),
             Shared_memory_manager_factory::create(client_shm_config));
-        assert(client_result);
-        gateway_client_ = std::move(client_result).value();
         assert(gateway_client_);
 
         auto start_result = gateway_server_->start();

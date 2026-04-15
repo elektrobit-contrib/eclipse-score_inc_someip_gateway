@@ -71,16 +71,9 @@ class Gateway_ipc_binding_unconnected_test : public ::testing::Test, protected T
             create_mock_unique_ptr(mock_server_shared_memory_manager_factory);
 
         // Create gateway IPC binding server with pre-created IPC server
-        auto server_result = Gateway_ipc_binding_server::create(
-            *runtime_server, std::move(ipc_server), std::move(mock_server_factory),
-            [](auto, auto, bool) {});
-
-        if (!server_result) {
-            throw std::runtime_error("Failed to create server: " +
-                                     std::string{server_result.error().Message()});
-        }
-
-        server = std::move(server_result).value();
+        server = Gateway_ipc_binding_server::create(*runtime_server, std::move(ipc_server),
+                                                    std::move(mock_server_factory),
+                                                    [](auto, auto, bool) {});
         assert(server && "Server creation failed");
 
         // Create gateway IPC binding client
@@ -88,15 +81,8 @@ class Gateway_ipc_binding_unconnected_test : public ::testing::Test, protected T
         auto connection = client_factory.Create(protocol_config, client_config);
         auto mock_client_factory =
             create_mock_unique_ptr(mock_client_shared_memory_manager_factory);
-        auto client_result = Gateway_ipc_binding_client::create(
-            *runtime_client, std::move(connection), std::move(mock_client_factory));
-
-        if (!client_result) {
-            throw std::runtime_error("Failed to create client: " +
-                                     std::string{client_result.error().Message()});
-        }
-
-        client = std::move(client_result).value();
+        client = Gateway_ipc_binding_client::create(*runtime_client, std::move(connection),
+                                                    std::move(mock_client_factory));
         assert(client && "Client creation failed");
     }
 };

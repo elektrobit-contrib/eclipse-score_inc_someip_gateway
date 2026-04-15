@@ -67,17 +67,12 @@ class Gateway_ipc_binding_unconnected_integration_test : public ::testing::Test,
         auto ipc_server = server_factory.Create(protocol_config, server_config);
 
         // Create gateway IPC binding server with pre-created IPC server
-        auto server_result = Gateway_ipc_binding_server::create(
+        auto server = Gateway_ipc_binding_server::create(
             runtime, std::move(ipc_server), Shared_memory_manager_factory::create(shm_config),
             mock_on_find_service_change_cb.as_function());
 
-        if (!server_result) {
-            throw std::runtime_error("Failed to create server: " +
-                                     std::string{server_result.error().Message()});
-        }
-
-        assert(server_result.value() && "Server creation failed");
-        return std::move(server_result).value();
+        assert(server && "Server creation failed");
+        return server;
     }
 
     std::unique_ptr<Gateway_ipc_binding_client> create_ipc_client(
@@ -86,17 +81,12 @@ class Gateway_ipc_binding_unconnected_integration_test : public ::testing::Test,
         Find_service_elements find_service_elements = {}) {
         score::message_passing::UnixDomainClientFactory client_factory;
         auto connection = client_factory.Create(protocol_config, client_config);
-        auto client_result = Gateway_ipc_binding_client::create(
+        auto client = Gateway_ipc_binding_client::create(
             runtime, std::move(connection), Shared_memory_manager_factory::create(shm_config),
             std::move(find_service_elements));
 
-        if (!client_result) {
-            throw std::runtime_error("Failed to create client: " +
-                                     std::string{client_result.error().Message()});
-        }
-
-        assert(client_result.value() && "Client creation failed");
-        return std::move(client_result).value();
+        assert(client && "Client creation failed");
+        return client;
     }
 
     void start_and_wait_for_client_connection() {

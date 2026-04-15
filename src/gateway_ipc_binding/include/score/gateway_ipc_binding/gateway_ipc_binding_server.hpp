@@ -47,8 +47,8 @@ class Gateway_ipc_binding_server {
     /// \param server pre-created message_passing server
     /// \param slot_manager factory for per-service writable and read-only shared memory managers
     /// \param on_find_service_change callback invoked on connect/disconnect find-service updates
-    /// \return Unique pointer to the created server or an error
-    static Result<std::unique_ptr<Gateway_ipc_binding_server>> create(
+    /// \return Unique pointer to the created server
+    static std::unique_ptr<Gateway_ipc_binding_server> create(
         score::socom::Runtime& runtime,
         score::cpp::pmr::unique_ptr<score::message_passing::IServer> server,
         score::gateway_ipc_binding::Shared_memory_manager_factory::Uptr slot_manager,
