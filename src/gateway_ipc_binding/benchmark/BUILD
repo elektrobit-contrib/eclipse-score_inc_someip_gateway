@@ -22,6 +22,34 @@ cc_binary(
             "*.hpp",
         ],
         allow_empty = True,
+        exclude = [
+            "event_transmission_client_to_server_memory.cpp",
+        ],
+    ),
+    data = ["tsan.supp"],
+    env = {
+        "TSAN_OPTIONS": "halt_on_error=1 suppressions=$(location tsan.supp)",
+    },
+    features = COMPILER_WARNING_FEATURES,
+    visibility = ["//visibility:public"],
+    deps = [
+        "//src/gateway_ipc_binding",
+        "@google_benchmark//:benchmark_main",
+        "@score_baselibs//score/mw/log:backend_stub_testutil",
+    ],
+)
+
+cc_binary(
+    name = "gateway_ipc_binding_memory",
+    srcs = glob(
+        include = [
+            "*.cpp",
+            "*.hpp",
+        ],
+        allow_empty = True,
+        exclude = [
+            "event_transmission_client_to_server_benchmark.cpp",
+        ],
     ),
     data = ["tsan.supp"],
     env = {
