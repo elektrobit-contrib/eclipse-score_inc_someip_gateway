@@ -200,7 +200,10 @@ void Gateway_ipc_binding_base::handle_connect_message(Client_id client_id, Reply
     reply.payload.status = true;
 
     auto send_result = conn.send(reply);
-    (void)send_result;
+    if (!send_result) {
+        std::cerr << "Failed to send Connect_reply message to client " << client_id << ": "
+                  << send_result.error() << std::endl;
+    }
     assert(send_result);
 }
 
