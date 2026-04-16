@@ -13,6 +13,7 @@
 
 #include <gtest/gtest.h>
 #include <score/memory/shared/shared_memory_factory.h>
+#include <unistd.h>
 
 #include <cstring>
 #include <score/gateway_ipc_binding/error.hpp>
@@ -34,7 +35,8 @@ class Shared_memory_slot_manager_test : public ::testing::Test {
 
     std::string get_unique_path() {
         static int counter = 0;
-        return "/test_shm_slot_manager_" + std::to_string(++counter);
+        return "/test_shm_slot_manager_" + std::to_string(getpid()) + "_" +
+               std::to_string(++counter);
     }
 
     socom::Service_interface_identifier const interface{
