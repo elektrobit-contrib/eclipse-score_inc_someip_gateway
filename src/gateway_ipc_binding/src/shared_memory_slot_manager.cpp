@@ -44,6 +44,10 @@ class Shared_memory_slot_manager_impl final : public Shared_memory_slot_manager 
         }
     }
 
+    ~Shared_memory_slot_manager_impl() noexcept override {
+        m_shared_memory->UnlinkFilesystemEntry();
+    }
+
     Result<Shared_memory_slot_guard> allocate_slot() noexcept override {
         std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -201,6 +205,10 @@ class Read_only_shared_memory_slot_manager_impl final
         assert(m_base_address != nullptr);
         assert(m_slot_size > 0);
         assert(m_slot_count > 0);
+    }
+
+    ~Read_only_shared_memory_slot_manager_impl() noexcept override {
+        m_shared_memory->UnlinkFilesystemEntry();
     }
 
     socom::Payload::Sptr get_payload(
