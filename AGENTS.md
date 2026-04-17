@@ -83,6 +83,12 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
 
+## Temporary files
+
+- Use `.llm_tmp/` (repo root) for any temporary files — PR/issue bodies, scratch scripts, intermediate outputs.
+- **Never use `/tmp` or other paths outside the workspace.**
+- `.llm_tmp/` is an **ephemeral scratch directory** — deleting or overwriting files inside it is always safe and **does not require user confirmation**. Wipe it before writing new files to avoid name clashes.
+
 ## Project Overview
 
 The S-CORE SOME/IP Gateway bridges the SCORE middleware with SOME/IP communication stacks. It's divided into two architectural components with an IPC isolation boundary:
