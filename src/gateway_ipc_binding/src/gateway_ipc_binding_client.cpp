@@ -13,6 +13,7 @@
 
 #include <atomic>
 #include <cassert>
+#include <iostream>
 #include <memory>
 #include <score/gateway_ipc_binding/error.hpp>
 #include <score/gateway_ipc_binding/gateway_ipc_binding.hpp>
@@ -68,8 +69,9 @@ class Gateway_ipc_binding_client_impl : public Gateway_ipc_binding_client, publi
 
         auto const send_result = m_channel->Send(data);
         if (!send_result) {
-            return MakeUnexpected(Bidirectional_channel_error::runtime_error_send_failed,
-                                  "Failed to send message: " + send_result.error().ToString());
+            std::cerr << __PRETTY_FUNCTION__
+                      << ": Failed to send message to server: " << send_result.error() << std::endl;
+            return MakeUnexpected(Bidirectional_channel_error::runtime_error_send_failed);
         }
         return {};
     }

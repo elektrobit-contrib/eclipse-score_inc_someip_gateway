@@ -15,6 +15,7 @@
 #include <score/message_passing/i_server_connection.h>
 
 #include <cassert>
+#include <iostream>
 #include <memory>
 #include <mutex>
 #include <score/gateway_ipc_binding/error.hpp>
@@ -39,9 +40,9 @@ class Server_reply_channel : public Reply_channel {
     Result<void> send(score::cpp::span<std::uint8_t const> data) noexcept override {
         auto const send_result = m_conn->Notify(data);
         if (!send_result) {
-            return MakeUnexpected(
-                Bidirectional_channel_error::runtime_error_send_failed,
-                "Failed to send message to client ID: " + send_result.error().ToString());
+            std::cerr << __PRETTY_FUNCTION__
+                      << ": Failed to send message to client: " << send_result.error() << std::endl;
+            return MakeUnexpected(Bidirectional_channel_error::runtime_error_send_failed);
         }
         return {};
     }
@@ -152,8 +153,10 @@ class Gateway_ipc_binding_server_impl : public Gateway_ipc_binding_server {
                                                std::move(internal_disconnect_callback),
                                                std::move(internal_message_callback));
         if (!result) {
-            return MakeUnexpected(Bidirectional_channel_error::runtime_error_listen_failed,
-                                  "Failed to start listening: " + result.error().ToString());
+            std::cerr << __PRETTY_FUNCTION__
+                      << ": Failed to start listening for incoming connections: " << result.error()
+                      << std::endl;
+            return MakeUnexpected(Bidirectional_channel_error::runtime_error_listen_failed);
         }
 
         {
