@@ -206,6 +206,12 @@ void Gateway_ipc_binding_base::handle_connect_reply_message(Connect_reply const&
     if (msg.status) {
         auto const lock = m_mutex.lock();
         m_service_states.for_each([this](auto const& key, auto& state) {
+            (void)key;
+            if (state.requested) {
+                send_request_service_locked(make_service(state.service),
+                                            make_instance_id(state.instance), true);
+            }
+
             maybe_send_connect_service_locked(key, state);
         });
     }
@@ -569,27 +575,44 @@ void Gateway_ipc_binding_base::handle_connect_service_reply_message(
     }
 }
 
+bool Gateway_ipc_binding_base::send_request_service_locked(Service const& service,
+                                                           Instance_id const& instance,
+                                                           bool in_use) noexcept {
+    log_it("in_use == ", in_use);
+    Message_frame<Request_service> msg;
+    msg.payload.service_id = service;
+    msg.payload.instance_id = instance;
+    msg.payload.in_use = in_use;
+
+    auto const key = m_keys.get(service, instance);
+    if (m_service_states.has_client_connector(key)) {
+        // Callback call was triggered by our creation of Client_connector
+        log_it("Client connector already exists for key, skipping creation and offer");
+        return false;
+    }
+
+    (void)m_connections.send_to_all(msg);
+    return true;
+}
+
 void Gateway_ipc_binding_base::send_request_service(
     score::socom::Service_interface_definition const& configuration,
     score::socom::Service_instance const& instance, bool in_use) noexcept {
     log_it("in_use == ", in_use);
-    Message_frame<Request_service> msg;
-    msg.payload.service_id = make_service(configuration.interface);
-    msg.payload.instance_id = make_instance_id(instance);
-    msg.payload.in_use = in_use;
+
     score::socom::Enabled_server_connector::Uptr removed_connector;
     auto const lock = m_mutex.lock();
 
-    auto const key = m_keys.get(configuration, instance);
-    if (m_service_states.has_client_connector(key)) {
-        // Callback call was triggered by our creation of Client_connector
-        log_it("Client connector already exists for key, skipping creation and offer");
+    auto const service = make_service(configuration.interface);
+    auto const instance_id = make_instance_id(instance);
+
+    if (!send_request_service_locked(service, instance_id, in_use)) {
         return;
     }
 
-    (void)m_connections.send_to_all(msg);
-
-    auto state_opt = m_service_states.process_request_service(key, configuration, msg.payload);
+    auto const key = m_keys.get(service, instance_id);
+    auto state_opt = m_service_states.process_request_service(
+        key, configuration, Request_service{service, instance_id, in_use});
     removed_connector = std::move(state_opt.connector);
     if (!state_opt.service_state) {
         m_id_mapping.remove_service(key);
