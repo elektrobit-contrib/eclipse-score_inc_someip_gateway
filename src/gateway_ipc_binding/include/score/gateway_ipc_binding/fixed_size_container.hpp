@@ -28,6 +28,10 @@ namespace score::gateway_ipc_binding {
 /// \brief Fixed-size container with explicit length for POD wire format
 /// \tparam T Type of elements in the container
 /// \tparam Max_size Maximum number of bytes available in data
+///
+/// \note A similar data structure is score::cpp::inplace_vector, but that fails to be trivially
+/// copyable due to its non-trivial destructor, copy and move operations, which makes it unsuitable
+/// for IPC payloads.
 template <typename T, std::size_t Max_size>
 struct Fixed_size_container {
     std::uint16_t size;
