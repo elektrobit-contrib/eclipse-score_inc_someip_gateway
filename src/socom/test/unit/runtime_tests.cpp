@@ -42,7 +42,6 @@ namespace score::socom {
 
 enum class Destruction_order { requests_first, bridges_first };
 using Bridge_param_tuple = std::tuple<size_t, size_t, size_t, Destruction_order, bool, bool>;
-using Subscribe_find_service_param_tuple = std::tuple<size_t, size_t, size_t, size_t, bool>;
 using Bridges = std::vector<std::unique_ptr<Bridge_data>>;
 using Atomic_getter = std::atomic<bool> const& (Bridge_data::*)() const;
 
@@ -83,46 +82,6 @@ struct Bridge_param {
         return 0 != get_total_requests() ? expect : Bridge_data::nothing;
     }
 };
-
-struct Subscribe_find_service_params {
-    size_t num_interfaces;
-    size_t num_instances;
-    size_t num_subscriptions_before_server_creation;
-    size_t num_subscriptions_after_server_creation;
-    bool clear_subscriptions_first;
-
-    explicit Subscribe_find_service_params(Subscribe_find_service_param_tuple const& tuple)
-        : num_interfaces{std::get<0>(tuple)},
-          num_instances{std::get<1>(tuple)},
-          num_subscriptions_before_server_creation{std::get<2>(tuple)},
-          num_subscriptions_after_server_creation{std::get<3>(tuple)},
-          clear_subscriptions_first{std::get<4>(tuple)} {}
-
-    size_t get_total_subsciptions() const {
-        return num_subscriptions_before_server_creation + num_subscriptions_after_server_creation;
-    }
-};
-
-std::string readable_test_names_wildcard(
-    TestParamInfo<Subscribe_find_service_param_tuple> const& param_info) {
-    Subscribe_find_service_params const params{param_info.param};
-    std::stringstream ss;
-    ss << params.num_interfaces << "_interfaces__and_";
-    ss << params.num_instances << "_instances__and_";
-    ss << params.num_subscriptions_before_server_creation
-       << "_subscriptions_before_server_creation__and_";
-    ss << params.num_subscriptions_after_server_creation
-       << "_subscriptions_after_server_creation__and_";
-    ss << "deleting_";
-    if (params.clear_subscriptions_first) {
-        ss << "subscriptions";
-    } else {
-        ss << "servers";
-    }
-    ss << "_first";
-
-    return ss.str();
-}
 
 std::string readable_test_names_bridge(TestParamInfo<Bridge_param_tuple> const& param_info) {
     auto const param = Bridge_param{param_info.param};
@@ -287,8 +246,6 @@ class RuntimeTest : public SingleConnectionTest {
         Service_instance{"first instance", Literal_tag{}},
         Service_instance{"second instance", Literal_tag{}}, connector_factory.get_instance()};
     Service_instance const expected_find_result{connector_factory.get_instance()};
-
-    std::atomic<bool> subscribe_find_service_cb_called{false};
 
     Request_service_function_mock rsf_mock;
 };
