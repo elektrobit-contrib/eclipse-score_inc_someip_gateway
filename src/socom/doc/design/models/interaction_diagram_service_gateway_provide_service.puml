@@ -30,8 +30,8 @@ activate socom
 return
 
 note right
-The bridge needs to know a priori the needed services.
-e.g. via configuration or IPC messages from remote counterparts.
+To get information about services the
+bridge needs to create a client connector.
 end note
 
 == service instance remote usage ==

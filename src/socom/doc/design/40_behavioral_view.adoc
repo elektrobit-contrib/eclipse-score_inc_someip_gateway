@@ -101,18 +101,6 @@ Consequently, update_event() satisfies the event update request implicitly.
 include::models/interaction_diagram_field_notification_communication.puml[]
 ....
 
-== Service Gateway - find service
-
-The creation of client connectors is forwarded to bridges as request_service() calls.
-Service bridges look up the required service instance within their domain.
-If available, they connect to the remote counterpart and locally create a proxy server connector (forwarding all communication).
-
-.Interaction diagram: Service Gateway - find service
-[plantuml, svg, align="center"]
-....
-include::models/interaction_diagram_service_gateway_find_service.puml[]
-....
-
 == Service Gateway - require service
 
 The creation of client connectors is forwarded to bridges as request_service() calls.
