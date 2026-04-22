@@ -36,7 +36,7 @@ inline constexpr std::size_t kMax_instance_id_size = 64U;
 /// \brief Maximum bytes for client identifier string (including null terminator)
 inline constexpr std::size_t kMax_client_identifier_size = 64U;
 /// \brief Maximum shared memory path length (including null terminator)
-inline constexpr std::size_t kMax_shared_memory_path_size = 508U;
+inline constexpr std::size_t kMax_shared_memory_path_size = NAME_MAX;
 
 /// \brief Message type identifiers for IPC framing
 enum class Message_type : std::uint8_t {
