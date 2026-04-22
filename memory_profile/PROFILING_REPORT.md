@@ -13,89 +13,101 @@ SPDX-License-Identifier: Apache-2.0
 *******************************************************************************
 -->
 
-# Memory Profiling Report: benchmark_event_transmission_client_to_server
+# Memory Profiling Report: gateway_ipc_binding_memory
 
 ## Build Configuration
 - **Build Type**: Release (-c opt)
 - **Compilation Optimizations**: Enabled
 - **Thread Sanitizer**: Disabled (removed -tsan feature)
-- **Binary Path**: `bazel-bin/src/gateway_ipc_binding/benchmark/gateway_ipc_binding_benchmark`
+- **Binary**: `gateway_ipc_binding_memory` (dedicated memory profiling application)
+- **Binary Path**: `bazel-bin/src/gateway_ipc_binding/benchmark/gateway_ipc_binding_memory`
 - **Binary Size**: ~18 MB
-- **Build Date**: 2026-04-15
+- **Build Date**: 2026-04-22
 
 ## Profiling Setup
-- **Tool**: GNU memusage (memory profiler)
-- **Benchmark Flags**: `--benchmark_min_time=0.02s`
-- **Test Duration**: ~21 seconds total
-- **Profiling Data**: `memusage.data`, `memusage.png`
+- **Tools**: GNU memusage + Valgrind Massif
+- **Workload**: 1,000,000 iterations, 1 MB payload
+- **Test Duration**: ~6.2 seconds (memusage), ~52 seconds (Massif)
+- **Profiling Data**: `memusage.data`, `memusage.png`, `massif.out.1`
 
 ## Memory Usage Summary
 
-### Overall Statistics
-- **Total Heap Allocated**: 10,447,202 bytes (~10.0 MB)
-- **Peak Heap Usage**: 195,318 bytes (~191 KB)
-- **Peak Stack Usage**: 26,832 bytes (~26 KB)
+### GNU memusage Statistics
+- **Total Heap Allocated**: 297,104,581 bytes (~283 MB cumulative over 1M iterations)
+- **Peak Heap Usage**: 172,314 bytes (~168 KB)
+- **Peak Stack Usage**: 10,384 bytes (~10 KB)
 
 ### Allocation Operations
-- **Total malloc calls**: 161,116
-- **Total realloc calls**: 3
-- **Total calloc calls**: 7
-- **Total free calls**: 162,071
+- **Total malloc calls**: 6,021,543
+- **Total realloc calls**: 0
+- **Total calloc calls**: 3
+- **Total free calls**: 6,021,547
 - **Failed allocations**: 0
 
-### Memory Fragmentation Analysis
+### Valgrind Massif Statistics
+- **Peak Heap Usage (useful)**: 175,594 bytes (~172 KB)
+- **Peak Heap Usage (total with overhead)**: 180,664 bytes (~176 KB)
+- **Number of Snapshots**: 59
+- **Heap Profile Shape**: Flat/stable across entire run (no growth)
+
+### Allocation Pattern (Histogram)
 Dominant allocation sizes:
-- **32-47 bytes**: 78,461 blocks (48%) - Most prevalent
-- **16-31 bytes**: 26,883 blocks (16%)
-- **112-127 bytes**: 26,074 blocks (16%)
-- **48-63 bytes**: 26,581 blocks (16%)
+- **32-47 bytes**: 3,002,521 blocks (49%) - Most prevalent
+- **16-31 bytes**: 1,009,023 blocks (16%)
+- **48-63 bytes**: 1,000,055 blocks (16%)
+- **112-127 bytes**: 1,000,017 blocks (16%)
 
-## Benchmark Performance Results
-(Release-optimized version, no sanitizers)
+## Execution Performance
+(Dedicated memory profiling application, 1 MB payload, 1M iterations)
 
-### Event Transmission (64B payload)
-- **Time**: ~6.1-6.2 µs per operation
-- **CPU**: ~4.4-4.7 ms
-- **Throughput**: ~10 MB/s
+### Event Transmission (1 MB payload)
+- **Total benchmark time**: 3,878 ms
+- **Total execution time**: 6,222 ms (including setup/teardown)
+- **Latency per iteration**: ~3.9 µs
+- **Iterations**: 1,000,000
 
-### Event Transmission (256B payload)
-- **Time**: ~5.8-5.9 µs per operation
-- **CPU**: ~4.5-4.8 ms
-- **Throughput**: ~41-43 MB/s
+### Per-Iteration Allocation Cost
+- **malloc calls per iteration**: ~6.0
+- **Bytes allocated per iteration**: ~297 bytes
+- **Net heap growth per iteration**: 0 (all freed)
 
-### Event Transmission (1KB payload)
-- **Time**: ~5.1-6.2 µs per operation
-- **CPU**: ~4.0-4.7 ms
-- **Throughput**: ~158-190 MB/s
+## Massif Top Allocators (at peak snapshot)
 
-### Event Transmission (1MB payload)
-- **Time**: ~4.7-5.6 µs per operation
-- **CPU**: ~3.8-4.2 ms
-- **Throughput**: ~174-209 GB/s
-
-### Cached Read-Only Lookup
-- **32-byte entries**: ~13.2 ns
-- **128-byte entries**: ~28.5 ns
-- **256-byte entries**: ~45.1 ns
+| Allocator | Size | % of Peak |
+|-----------|------|-----------|
+| `ClientConnection::ClientConnection` (vector reserve) | 81,920 B | 49.1% |
+| `ConsoleRecorderFactory::CreateConsoleLoggingBackend` (logging) | 24,792 B | 14.8% |
+| `LogRecord` circular allocator (logging buffer) | 16,384 B | 9.8% |
+| `Shared_memory_managers::insert_allocation` (hash table) | 3,072 B | 1.7% |
+| `Gateway_ipc_binding_client_impl` | 2,912 B | 1.6% |
+| `Connection_metadata::add_mapping` | 2,128 B | 1.2% |
+| `Writable_payload` (shared_ptr) | 2,048 B | 1.1% |
+| `Shared_memory_slot_manager_impl` | 2,048 B | 1.1% |
+| `ClientConnection` send command buffer | 1,920 B | 1.1% |
+| Other (159 places below threshold) | 23,914 B | 14.3% |
 
 ## Key Findings
 
-1. **Memory Profile**: Very efficient memory usage with only ~10 MB total heap allocation across the entire benchmark run
-2. **Peak Memory**: Only 191 KB peak heap usage indicates efficient memory management
-3. **Allocation Pattern**: Small allocations dominate (32-47 bytes account for 48% of allocations)
-4. **No Leaks**: Perfect balance of 162,071 free calls vs 161,116 malloc calls (only differ by ~1000 due to calloc/realloc)
-5. **Performance**: Event transmission latency is in the microsecond range with excellent throughput
-6. **Scalability**: Throughput scales linearly with payload size, reaching 209 GB/s for 1MB payloads
+1. **Stable Memory Profile**: Peak heap is ~168-172 KB useful bytes, perfectly flat across 1M iterations — no growth
+2. **Peak Memory**: 172 KB peak (Massif useful-heap), 176 KB total with overhead
+3. **Allocation Pattern**: Small allocations dominate (32-47 bytes account for 49% of 6M allocations)
+4. **No Leaks**: Perfect balance — 6,021,547 free calls vs 6,021,543 malloc + 3 calloc calls
+5. **Dominant Allocator**: `ClientConnection` buffer reserve accounts for 49% of peak heap
+6. **Logging Overhead**: Console logging backend accounts for ~25% of peak heap (24.8 KB + 16.4 KB)
 
 ## Recommendations
 
-- **Light Memory Footprint**: The benchmark demonstrates excellent memory efficiency suitable for embedded/real-time systems
-- **Small Allocation Focus**: The dominance of 32-47 byte allocations suggests the code could benefit from object pooling or custom memory allocators for these sizes
-- **Zero-Copy Optimization**: Consider pre-allocating buffers for the most common payload sizes (64B-1MB range)
-- **Monitoring**: Peak heap usage of 191 KB is stable and predictable, making it suitable for resource-constrained environments
+- **Light Memory Footprint**: Peak at 172 KB useful heap — excellent for embedded/real-time systems
+- **Flat Allocation Profile**: Zero heap growth over 1M iterations confirms no leaks and stable memory
+- **Small Allocation Optimization**: 97% of allocations are < 128 bytes; object pooling for 32-47 byte blocks could reduce allocator overhead
+- **Logging Overhead**: ~25% of peak heap is logging infrastructure; consider disabling in production or using a lighter backend
+- **ClientConnection Buffer**: 80 KB reserve (49% of peak) is one-time setup cost, acceptable for long-running services
 
 ## Output Files
 
-- `memusage.data`: Raw profiling data file (7.4 MB)
+- `memusage.data`: Raw profiling data file (276 MB)
 - `memusage.png`: Memory usage timeline graph
+- `massif.out.1`: Valgrind Massif heap profile (324 KB)
+- `benchmark_run.log`: memusage execution log
+- `massif_run.log`: Massif execution log
 - `PROFILING_REPORT.md`: This report
