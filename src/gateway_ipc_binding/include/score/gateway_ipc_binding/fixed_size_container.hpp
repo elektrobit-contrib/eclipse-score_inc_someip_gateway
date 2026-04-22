@@ -34,7 +34,7 @@ namespace score::gateway_ipc_binding {
 /// for IPC payloads.
 template <typename T, std::size_t Max_size>
 struct Fixed_size_container {
-    std::uint16_t size;
+    std::size_t size;
     std::array<T, Max_size> data;
 
     Fixed_size_container() = default;
@@ -45,7 +45,7 @@ struct Fixed_size_container {
     }
 
     Fixed_size_container(std::initializer_list<T> initializer_list)
-        : size(static_cast<std::uint16_t>(initializer_list.size())) {
+        : size(initializer_list.size()) {
         assert(initializer_list.size() <= Max_size);
         std::copy_n(initializer_list.begin(), std::min(initializer_list.size(), Max_size),
                     data.begin());
@@ -82,7 +82,7 @@ bool fill_fixed_string(Fixed_string<Max_size>& out, std::string_view value) noex
         return false;
     }
 
-    out.size = static_cast<std::uint16_t>(value.size());
+    out.size = value.size();
     if (!value.empty()) {
         std::memcpy(out.data.data(), value.data(), value.size());
     }
