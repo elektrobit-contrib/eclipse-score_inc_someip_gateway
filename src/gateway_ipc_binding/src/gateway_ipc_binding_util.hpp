@@ -66,6 +66,10 @@ std::optional<Msg_type const*> check_and_cast(score::cpp::span<std::uint8_t cons
         return std::nullopt;  // Invalid frame - insufficient data
     }
 
+    if (reinterpret_cast<std::uintptr_t>(data.data()) % alignof(Message_frame<Msg_type>) != 0) {
+        return std::nullopt;  // Invalid frame - unaligned data pointer
+    }
+
     Message_frame<Msg_type> const* const connect =
         reinterpret_cast<Message_frame<Msg_type> const*>(data.data());
 
