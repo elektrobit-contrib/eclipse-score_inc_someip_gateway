@@ -25,6 +25,7 @@ class Payload_mock : public Payload {
     MOCK_METHOD(Span, data, (), (const, noexcept, override));
     MOCK_METHOD(Span, header, (), (const, noexcept, override));
     MOCK_METHOD(Writable_span, header, (), (noexcept, override));
+    MOCK_METHOD(std::size_t, get_slot_handle, (), (const, noexcept, override));
 };
 
 class Writable_payload_mock : public score::socom::Writable_payload {
@@ -33,6 +34,7 @@ class Writable_payload_mock : public score::socom::Writable_payload {
     MOCK_METHOD(Span, header, (), (const, noexcept, override));
     MOCK_METHOD(Writable_span, header, (), (noexcept, override));
     MOCK_METHOD(Writable_span, wdata, (), (noexcept, override));
+    MOCK_METHOD(std::size_t, get_slot_handle, (), (const, noexcept, override));
 };
 
 }  // namespace score::socom

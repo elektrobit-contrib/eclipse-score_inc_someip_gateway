@@ -15,10 +15,14 @@
 #define SCORE_SOCOM_PAYLOAD_HPP
 
 #include <cstddef>
+#include <limits>
 #include <memory>
 #include <score/span.hpp>
 
 namespace score::socom {
+
+/// \brief Sentinel value indicating that a payload is not associated with a shared memory slot.
+constexpr std::size_t kNoSlotHandle = std::numeric_limits<std::size_t>::max();
 
 /// \brief Interface representing the Payload transferable by SOCom.
 /// \details The payload itself must be representable by a continuous Span of bytes.
@@ -69,8 +73,9 @@ class Payload {
     /// \return Writable span of header data.
     [[nodiscard]] virtual Writable_span header() noexcept = 0;
 
-    // TODO only interface
-    [[nodiscard]] virtual std::size_t get_slot_handle() const noexcept { return 0; }
+    /// \brief Retrieves the slot handle associated with this payload.
+    /// \return The slot handle, or kNoSlotHandle if not associated with a slot.
+    [[nodiscard]] virtual std::size_t get_slot_handle() const noexcept = 0;
 };
 
 /// \brief An empty payload instance, which may be used as default value for the payload parameter.

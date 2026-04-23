@@ -227,4 +227,13 @@ TEST(Payload, OperatorEqual) {
     EXPECT_NE(*payload2, *payload3);
 }
 
+TEST(Payload, VectorPayloadGetSlotHandleReturnsNoSlotHandle) {
+    auto const payload = make_vector_payload(make_vector_buffer(1U, 2U, 3U));
+    EXPECT_EQ(kNoSlotHandle, payload->get_slot_handle());
+}
+
+TEST(Payload, EmptyPayloadGetSlotHandleReturnsNoSlotHandle) {
+    EXPECT_EQ(kNoSlotHandle, empty_payload()->get_slot_handle());
+}
+
 }  // namespace score::socom

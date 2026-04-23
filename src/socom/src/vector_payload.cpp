@@ -53,6 +53,8 @@ class Vector_payload final : public Payload {
         Span const span{m_buffer};
         return span.subspan(m_lead_offset, m_header_size);
     }
+
+    [[nodiscard]] std::size_t get_slot_handle() const noexcept override { return kNoSlotHandle; }
 };
 
 }  // namespace
