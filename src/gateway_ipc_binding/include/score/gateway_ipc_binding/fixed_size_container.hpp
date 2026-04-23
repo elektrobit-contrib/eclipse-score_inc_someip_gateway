@@ -14,12 +14,15 @@
 #ifndef SRC_GATEWAY_IPC_BINDING_INCLUDE_SCORE_GATEWAY_IPC_BINDING_FIXED_SIZE_CONTAINER
 #define SRC_GATEWAY_IPC_BINDING_INCLUDE_SCORE_GATEWAY_IPC_BINDING_FIXED_SIZE_CONTAINER
 
+#include <score/result/result.h>
+
 #include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
 #include <initializer_list>
 #include <iterator>
+#include <score/gateway_ipc_binding/error.hpp>
 #include <string>
 #include <string_view>
 
@@ -36,6 +39,7 @@ template <typename T, std::size_t Max_size>
 struct Fixed_size_container {
     std::size_t size;
     std::array<T, Max_size> data;
+    static constexpr std::size_t max_size = Max_size;
 
     Fixed_size_container() = default;
 
@@ -76,23 +80,16 @@ struct Fixed_size_container_hash {
 template <std::size_t Max_size>
 using Fixed_string = Fixed_size_container<char, Max_size>;
 
-template <std::size_t Max_size>
-bool fill_fixed_string(Fixed_string<Max_size>& out, std::string_view value) noexcept {
-    if (value.size() > Max_size) {
-        return false;
+template <typename Target_type>
+Result<Fixed_string<Target_type::max_size>> fixed_string_from_string(
+    std::string_view value) noexcept {
+    if (value.size() > Target_type::max_size) {
+        return MakeUnexpected(Gateway_ipc_binding_error::fixed_size_container_too_small);
     }
 
-    out.size = value.size();
-    if (!value.empty()) {
-        std::memcpy(out.data.data(), value.data(), value.size());
-    }
-    return true;
-}
-
-template <std::size_t Max_size>
-Fixed_string<Max_size> fixed_string_from_string(std::string_view value) noexcept {
-    Fixed_string<Max_size> result{};
-    fill_fixed_string(result, value);
+    Fixed_string<Target_type::max_size> result{};
+    result.size = value.size();
+    std::memcpy(result.data.data(), value.data(), value.size());
     return result;
 }
 

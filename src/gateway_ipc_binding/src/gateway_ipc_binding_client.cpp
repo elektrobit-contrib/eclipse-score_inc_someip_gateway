@@ -149,9 +149,12 @@ std::unique_ptr<Gateway_ipc_binding_client> Gateway_ipc_binding_client::create(
     std::string_view identifier) noexcept {
     assert(connection && "Connection must not be null");
 
+    auto identifier_opt = fixed_string_from_string<Client_identifier>(identifier);
+    assert(identifier_opt && "Identifier exceeds maximum size for Client_identifier");
+
     return std::make_unique<Gateway_ipc_binding_client_impl>(
         runtime, std::move(connection), std::move(slot_manager), std::move(find_service_elements),
-        fixed_string_from_string<kMax_client_identifier_size>(identifier));
+        *identifier_opt);
 }
 
 }  // namespace score::gateway_ipc_binding

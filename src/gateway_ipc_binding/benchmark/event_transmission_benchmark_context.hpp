@@ -51,11 +51,11 @@ using namespace std::chrono_literals;
                                                           std::uint32_t slot_size,
                                                           std::uint32_t slot_count) {
     Shared_memory_metadata metadata{};
-    bool const ok = fill_fixed_string(metadata.path, path);
-    (void)ok;  // Avoid unused variable warning in non-debug builds
-    assert(ok && "Path should fit into fixed-size metadata path");
+    auto result = fixed_string_from_string<Shared_memory_path>(path);
+    assert(result && "Path should fit into fixed-size metadata path");
     metadata.slot_size = slot_size;
     metadata.slot_count = slot_count;
+    metadata.path = *result;
     return metadata;
 }
 

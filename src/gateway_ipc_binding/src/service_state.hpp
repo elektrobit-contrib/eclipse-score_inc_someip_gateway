@@ -93,7 +93,9 @@ struct Service_state {
 
                 Message_frame<Connect_service> msg;
                 msg.payload.service_id = make_service(service);
-                fill_fixed_string(msg.payload.instance_id, instance.id.string_view());
+                auto result = fixed_string_from_string<Instance_id>(instance.id.string_view());
+                assert(result && "String exceeds maximum size for fixed string");
+                msg.payload.instance_id = *result;
                 msg.payload.required_id = offer.required_id;
                 msg.payload.metadata =
                     slot_managers.get_shared_memory_metadata(keys.get(service, instance));

@@ -54,9 +54,10 @@ void benchmark_cached_read_only_lookup(benchmark::State& state) {
     Read_only_memory_managers managers{factory};
 
     Shared_memory_metadata metadata{};
-    std::string path(static_cast<std::size_t>(state.range(0)), 'a');
-    bool const ok = fill_fixed_string(metadata.path, path);
-    assert(ok && "Path should fit into fixed-size metadata path");
+    std::string const path(static_cast<std::size_t>(state.range(0)), 'a');
+    auto result = fixed_string_from_string<Shared_memory_path>(path);
+    assert(result && "Path should fit into fixed-size metadata path");
+    metadata.path = *result;
     metadata.slot_size = 1024U;
     metadata.slot_count = 8U;
 

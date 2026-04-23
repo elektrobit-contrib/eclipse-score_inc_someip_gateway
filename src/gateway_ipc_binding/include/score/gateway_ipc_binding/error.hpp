@@ -65,6 +65,14 @@ enum class Bidirectional_channel_error : score::result::ErrorCode {
 score::result::Error MakeError(Bidirectional_channel_error code,
                                std::string_view user_message = "") noexcept;
 
+enum class Gateway_ipc_binding_error : score::result::ErrorCode {
+    /// Data to be copied into container is larger than the container's maximum size
+    fixed_size_container_too_small
+};
+
+score::result::Error MakeError(Gateway_ipc_binding_error code,
+                               std::string_view user_message = "") noexcept;
+
 }  // namespace score::gateway_ipc_binding
 
 #endif  // SRC_GATEWAY_IPC_BINDING_INCLUDE_SCORE_GATEWAY_IPC_BINDING_ERROR

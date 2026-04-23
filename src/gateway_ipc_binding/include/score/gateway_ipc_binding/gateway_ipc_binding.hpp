@@ -57,9 +57,12 @@ enum class Message_type : std::uint8_t {
     Payload_consumed = 15,
 };
 
+/// \brief Service id in fixed-size form
+using Service_id = Fixed_string<kMax_service_id_size>;
+
 /// \brief Service descriptor, POD-friendly representation of socom Service
 struct Service {
-    Fixed_string<kMax_service_id_size> service_id;
+    Service_id service_id;
     socom::Service_interface_identifier::Version version;
 
     socom::Service_interface_identifier to_socom_identifier() const noexcept;
@@ -107,9 +110,12 @@ struct Shared_memory_handle {
 
 bool operator==(Shared_memory_handle const& lhs, Shared_memory_handle const& rhs) noexcept;
 
+/// \brief Path to shared memory, in fixed-size form
+using Shared_memory_path = Fixed_string<kMax_shared_memory_path_size>;
+
 /// \brief Metadata needed to map and interpret peer shared memory
 struct Shared_memory_metadata {
-    Fixed_string<kMax_shared_memory_path_size> path;
+    Shared_memory_path path;
     std::uint32_t slot_size;
     std::uint32_t slot_count;
 };

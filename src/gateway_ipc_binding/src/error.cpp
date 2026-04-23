@@ -84,4 +84,25 @@ score::result::Error MakeError(Bidirectional_channel_error code,
     return {static_cast<score::result::ErrorCode>(code), error_domain, user_message};
 }
 
+namespace {
+class Gateway_ipc_binding_error_domain final : public score::result::ErrorDomain {
+   public:
+    std::string_view MessageFor(score::result::ErrorCode const& code) const noexcept override {
+        switch (static_cast<Gateway_ipc_binding_error>(code)) {
+            case Gateway_ipc_binding_error::fixed_size_container_too_small:
+                return "Data to be copied into container is larger than the container's maximum "
+                       "size";
+            default:
+                return "Unknown error";
+        }
+    }
+};
+}  // namespace
+
+score::result::Error MakeError(Gateway_ipc_binding_error code,
+                               std::string_view user_message) noexcept {
+    static constexpr Gateway_ipc_binding_error_domain error_domain;
+    return {static_cast<score::result::ErrorCode>(code), error_domain, user_message};
+}
+
 }  // namespace score::gateway_ipc_binding

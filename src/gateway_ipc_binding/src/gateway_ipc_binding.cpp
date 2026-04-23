@@ -39,18 +39,16 @@ Service make_service(score::socom::Service_interface_identifier const& interface
     Service service{};
     service.version.major = interface.version.major;
     service.version.minor = interface.version.minor;
-    if (!fill_fixed_string(service.service_id, interface.id.string_view())) {
-        assert(false && "Service id exceeds fixed size");
-    }
+    auto const result = fixed_string_from_string<Service_id>(interface.id.string_view());
+    assert(result && "Service id exceeds fixed size");
+    service.service_id = *result;
     return service;
 }
 
 Instance_id make_instance_id(score::socom::Service_instance const& instance) noexcept {
-    Instance_id id{};
-    if (!fill_fixed_string(id, instance.id.string_view())) {
-        assert(false && "Instance id exceeds fixed size");
-    }
-    return id;
+    auto const result = fixed_string_from_string<Instance_id>(instance.id.string_view());
+    assert(result && "Instance id exceeds fixed size");
+    return *result;
 }
 
 bool operator==(Shared_memory_handle const& lhs, Shared_memory_handle const& rhs) noexcept {

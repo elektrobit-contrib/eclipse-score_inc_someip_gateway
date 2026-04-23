@@ -28,6 +28,14 @@
 
 namespace score::gateway_ipc_binding {
 
+template <typename Target_type>
+Fixed_string<Target_type::max_size> fixed_string_from_string_asserted(
+    std::string_view value) noexcept {
+    auto result = fixed_string_from_string<Target_type>(value);
+    assert(result && "String exceeds maximum size for fixed string");
+    return *result;
+}
+
 class Shared_memory_slot_manager_test : public ::testing::Test {
    protected:
     static constexpr std::size_t DEFAULT_NUMBER_OF_SLOTS = 256;  // 256 slots
@@ -44,22 +52,22 @@ class Shared_memory_slot_manager_test : public ::testing::Test {
 
     socom::Service_instance const instance{"instance1", socom::Literal_tag{}};
     Shared_memory_metadata const shared_memory_metadata{
-        fixed_string_from_string<kMax_shared_memory_path_size>(get_unique_path()),
-        DEFAULT_SLOT_SIZE, DEFAULT_NUMBER_OF_SLOTS};
+        fixed_string_from_string_asserted<Shared_memory_path>(get_unique_path()), DEFAULT_SLOT_SIZE,
+        DEFAULT_NUMBER_OF_SLOTS};
 
     socom::Service_instance const instance_other_size{"instance_other_size", socom::Literal_tag{}};
     Shared_memory_metadata const shared_memory_metadata_other_size{
-        fixed_string_from_string<kMax_shared_memory_path_size>(get_unique_path()), 100, 4};
+        fixed_string_from_string_asserted<Shared_memory_path>(get_unique_path()), 100, 4};
 
     socom::Service_instance const instance_zero_slot_size{"instance_zero_slot_size",
                                                           socom::Literal_tag{}};
     Shared_memory_metadata const shared_memory_metadata_zero_slot_size{
-        fixed_string_from_string<kMax_shared_memory_path_size>(get_unique_path()), 0, 100};
+        fixed_string_from_string_asserted<Shared_memory_path>(get_unique_path()), 0, 100};
 
     socom::Service_instance const instance_zero_slot_count{"instance_zero_slot_count",
                                                            socom::Literal_tag{}};
     Shared_memory_metadata const shared_memory_metadata_zero_slot_count{
-        fixed_string_from_string<kMax_shared_memory_path_size>(get_unique_path()), 100, 0};
+        fixed_string_from_string_asserted<Shared_memory_path>(get_unique_path()), 100, 0};
 
     Shared_memory_manager_factory::Shared_memory_configuration const config{
         {interface,

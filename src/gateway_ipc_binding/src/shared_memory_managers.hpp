@@ -61,10 +61,10 @@ class Shared_memory_managers {
 
     Shared_memory_metadata get_shared_memory_metadata(
         Shared_memory_slot_manager const& slot_manager) noexcept {
-        Fixed_string<kMax_shared_memory_path_size> path;
-        fill_fixed_string(path, slot_manager.get_path());
+        auto result = fixed_string_from_string<Shared_memory_path>(slot_manager.get_path());
+        assert(result && "Path should fit into fixed-size metadata path");
 
-        return Shared_memory_metadata{path, static_cast<uint32_t>(slot_manager.get_slot_size()),
+        return Shared_memory_metadata{*result, static_cast<uint32_t>(slot_manager.get_slot_size()),
                                       static_cast<uint32_t>(slot_manager.get_slot_count())};
     }
 
@@ -116,8 +116,8 @@ class Shared_memory_managers {
 
 class Read_only_memory_managers {
     Shared_memory_manager_factory::Sptr m_slot_manager_factory;
-    std::unordered_map<Fixed_string<kMax_shared_memory_path_size>,
-                       Read_only_shared_memory_slot_manager::Uptr, Fixed_size_container_hash>
+    std::unordered_map<Shared_memory_path, Read_only_shared_memory_slot_manager::Uptr,
+                       Fixed_size_container_hash>
         m_read_only_slot_managers;
 
    public:

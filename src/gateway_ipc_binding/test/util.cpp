@@ -47,7 +47,9 @@ Shared_memory_metadata make_metadata(std::string const& path, std::uint32_t slot
     Shared_memory_metadata metadata{};
     // with linux-sandbox make_unique_name() is not really necessary for uniqueness, but it adds an
     // extra layer of safety
-    EXPECT_TRUE(fill_fixed_string(metadata.path, make_unique_name(path)));
+    auto result = fixed_string_from_string<Shared_memory_path>(make_unique_name(path));
+    EXPECT_TRUE(result);
+    metadata.path = *result;
     metadata.slot_size = slot_size;
     metadata.slot_count = slot_count;
     return metadata;
