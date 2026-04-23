@@ -14,6 +14,7 @@
 #ifndef SRC_GATEWAY_IPC_BINDING_SRC_BINDING_BASE
 #define SRC_GATEWAY_IPC_BINDING_SRC_BINDING_BASE
 
+#include <mutex>
 #include <score/gateway_ipc_binding/gateway_ipc_binding_server.hpp>
 #include <score/socom/client_connector.hpp>
 #include <score/socom/runtime.hpp>
@@ -107,7 +108,7 @@ class Gateway_ipc_binding_base : public Service_request_sender {
     Shared_memory_managers m_slot_managers;
     Read_only_memory_managers m_read_only_slot_managers;
     score::socom::Service_bridge_registration m_bridge_registration;
-    Callback_aware_mutex m_mutex;
+    std::recursive_mutex m_mutex;
     Service_states m_service_states;
     Connection_metadata m_id_mapping;
     std::unordered_map<Key_t, bool> m_local_offers;

@@ -75,19 +75,19 @@ Gateway_ipc_binding_base::Gateway_ipc_binding_base(score::socom::Runtime& runtim
 Gateway_ipc_binding_base::~Gateway_ipc_binding_base() {
     score::socom::Service_bridge_registration bridge_registration;
     std::vector<score::socom::Client_connector::Uptr> client_connectors;
-    auto const lock = m_mutex.lock();
+    std::lock_guard<std::recursive_mutex> const lock{m_mutex};
     bridge_registration = std::move(m_bridge_registration);
     client_connectors = m_service_states.release_client_connectors();
 }
 
 void Gateway_ipc_binding_base::add_client(Client_id const& client_id,
                                           Reply_channel& reply_channel) {
-    auto const lock = m_mutex.lock();
+    std::lock_guard<std::recursive_mutex> const lock{m_mutex};
     m_connections.add_client(client_id, reply_channel);
 }
 
 void Gateway_ipc_binding_base::remove_client(Client_id const& client_id) {
-    auto const lock = m_mutex.lock();
+    std::lock_guard<std::recursive_mutex> const lock{m_mutex};
     m_connections.remove_client(client_id);
     remove_client_state_locked(client_id);
 }
@@ -204,7 +204,7 @@ void Gateway_ipc_binding_base::handle_connect_message(Client_id client_id, Reply
 
 void Gateway_ipc_binding_base::handle_connect_reply_message(Connect_reply const& msg) {
     if (msg.status) {
-        auto const lock = m_mutex.lock();
+        std::lock_guard<std::recursive_mutex> const lock{m_mutex};
         m_service_states.for_each([this](auto const& key, auto& state) {
             (void)key;
             if (state.requested) {
@@ -221,7 +221,7 @@ void Gateway_ipc_binding_base::handle_request_service_message(Client_id client_i
                                                               Reply_channel& conn,
                                                               Request_service const& msg) noexcept {
     log_it("");
-    auto const lock = m_mutex.lock();
+    std::lock_guard<std::recursive_mutex> const lock{m_mutex};
     auto const& key = m_keys.get(msg.service_id, msg.instance_id);
     if (!msg.in_use) {
         m_service_states.remove_event_subscriptions_for_client(client_id);
@@ -250,7 +250,7 @@ void Gateway_ipc_binding_base::handle_request_service_message(Client_id client_i
     auto const send_event_update = [this, key = key](score::socom::Client_connector const&,
                                                      score::socom::Event_id event_id,
                                                      score::socom::Payload::Sptr const& payload) {
-        auto const lock = m_mutex.lock();
+        std::lock_guard<std::recursive_mutex> const lock{m_mutex};
         std::size_t recipient_count{0U};
 
         m_id_mapping.for_each_client(
@@ -283,7 +283,7 @@ void Gateway_ipc_binding_base::handle_request_service_message(Client_id client_i
                     score::socom::Service_state state,
                     score::socom::Server_service_interface_definition const& configuration) {
             log_it("");
-            auto const lock = m_mutex.lock();
+            std::lock_guard<std::recursive_mutex> const lock{m_mutex};
 
             auto const is_available = state == score::socom::Service_state::available;
 
@@ -312,7 +312,7 @@ void Gateway_ipc_binding_base::handle_request_service_message(Client_id client_i
     auto const event_payload_allocate =
         [this, key](score::socom::Client_connector const&,
                     score::socom::Event_id) -> score::Result<score::socom::Writable_payload::Uptr> {
-        auto const lock = m_mutex.lock();
+        std::lock_guard<std::recursive_mutex> const lock{m_mutex};
 
         auto allocation = m_slot_managers.get_shared_memory_slot_manager(key).allocate_slot();
 
@@ -347,7 +347,7 @@ void Gateway_ipc_binding_base::handle_offer_service_message(Client_id client_id,
     // using socom
     score::socom::Enabled_server_connector::Uptr removed_connector;
 
-    auto const lock = m_mutex.lock();
+    std::lock_guard<std::recursive_mutex> const lock{m_mutex};
     auto const& key = m_keys.get(msg.service_id, msg.instance_id);
     auto state = m_service_states.process_offer(key, client_id, msg);
     removed_connector = std::move(state.connector);
@@ -364,7 +364,7 @@ void Gateway_ipc_binding_base::handle_offer_service_message(Client_id client_id,
 
 void Gateway_ipc_binding_base::handle_subscribe_event_message(Client_id client_id,
                                                               Subscribe_event const& msg) noexcept {
-    auto const lock = m_mutex.lock();
+    std::lock_guard<std::recursive_mutex> const lock{m_mutex};
     // Find the connection by provided_id for this client
     auto const mapping_info = m_id_mapping.get_by_local_handle(client_id, msg.provided_id);
 
@@ -380,7 +380,7 @@ void Gateway_ipc_binding_base::handle_subscribe_event_message(Client_id client_i
 
 void Gateway_ipc_binding_base::handle_event_update_message(Client_id client_id,
                                                            Event_update const& msg) noexcept {
-    auto const lock = m_mutex.lock();
+    std::lock_guard<std::recursive_mutex> const lock{m_mutex};
     auto const mapping_info = m_id_mapping.get_by_remote_handle(client_id, msg.required_id);
     if (!mapping_info.has_value()) {
         // Mapping was removed, but peer send event update, before it processed the unsubscription
@@ -399,7 +399,7 @@ void Gateway_ipc_binding_base::handle_event_update_message(Client_id client_id,
 
     Read_only_shared_memory_slot_manager::On_payload_destruction_callback on_payload_destruction =
         [this, client_id, required_id = msg.required_id, payload_handle = msg.payload]() {
-            auto const lock = m_mutex.lock();
+            std::lock_guard<std::recursive_mutex> const lock{m_mutex};
             Reply_channel* const conn = m_connections.get_reply_channel(client_id);
 
             if (conn == nullptr) {
@@ -424,7 +424,7 @@ void Gateway_ipc_binding_base::handle_event_update_message(Client_id client_id,
 
 void Gateway_ipc_binding_base::handle_payload_consumed_message(
     Client_id client_id, Payload_consumed const& msg) noexcept {
-    auto const lock = m_mutex.lock();
+    std::lock_guard<std::recursive_mutex> const lock{m_mutex};
     auto const mapping_info = m_id_mapping.get_by_remote_handle(client_id, msg.required_id);
     if (!mapping_info.has_value()) {
         return;
@@ -437,7 +437,7 @@ void Gateway_ipc_binding_base::handle_connect_service_message(Client_id client_i
                                                               Reply_channel& conn,
                                                               Connect_service const& msg) noexcept {
     log_it("");
-    auto lock = m_mutex.lock();
+    std::unique_lock<std::recursive_mutex> lock{m_mutex};
     auto const& key = m_keys.get(msg.service_id, msg.instance_id);
     if (!msg.in_use) {
         score::socom::Client_connector::Uptr removed_connector;
@@ -485,7 +485,7 @@ void Gateway_ipc_binding_base::handle_connect_service_reply_message(
     Connection_metadata::Ids info{};
 
     {
-        auto const lock = m_mutex.lock();
+        std::lock_guard<std::recursive_mutex> const lock{m_mutex};
         auto const pending = m_pending_connects.find(msg.required_id);
         if (pending == m_pending_connects.end()) {
             return;
@@ -533,7 +533,7 @@ void Gateway_ipc_binding_base::handle_connect_service_reply_message(
         [this, client_id, provided_id = info.local_handle](socom::Enabled_server_connector&,
                                                            socom::Event_id event_id,
                                                            socom::Event_state event_state) {
-            auto const lock = m_mutex.lock();
+            std::lock_guard<std::recursive_mutex> const lock{m_mutex};
             Reply_channel* conn = m_connections.get_reply_channel(client_id);
 
             if (conn == nullptr) {
@@ -570,7 +570,7 @@ void Gateway_ipc_binding_base::handle_connect_service_reply_message(
         socom::Disabled_server_connector::enable(std::move(server_connector_result).value());
 
     if (enabled_connector) {
-        auto const lock = m_mutex.lock();
+        std::lock_guard<std::recursive_mutex> const lock{m_mutex};
         m_service_states.add_server_connector(info.key, std::move(enabled_connector));
     }
 }
@@ -601,7 +601,7 @@ void Gateway_ipc_binding_base::send_request_service(
     log_it("in_use == ", in_use);
 
     score::socom::Enabled_server_connector::Uptr removed_connector;
-    auto const lock = m_mutex.lock();
+    std::lock_guard<std::recursive_mutex> const lock{m_mutex};
 
     auto const service = make_service(configuration.interface);
     auto const instance_id = make_instance_id(instance);

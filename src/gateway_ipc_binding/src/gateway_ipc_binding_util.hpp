@@ -14,12 +14,9 @@
 #ifndef SRC_GATEWAY_IPC_BINDING_SRC_GATEWAY_IPC_BINDING_UTIL
 #define SRC_GATEWAY_IPC_BINDING_SRC_GATEWAY_IPC_BINDING_UTIL
 
-#include <atomic>
 #include <cstdint>
-#include <mutex>
 #include <optional>
 #include <score/gateway_ipc_binding/gateway_ipc_binding.hpp>
-#include <thread>
 
 namespace score::gateway_ipc_binding {
 
@@ -93,50 +90,6 @@ class Id_generator {
     Id_generator(T start = T{}) : m_next_id(std::move(start)) {}
 
     T get_next_id() noexcept { return m_next_id++; }
-};
-
-class Lock_guard {
-    std::optional<std::lock_guard<std::mutex>> m_guard;
-    std::atomic<std::optional<std::thread::id>>* m_thread_id = nullptr;
-
-   public:
-    Lock_guard(std::mutex& mutex, std::atomic<std::optional<std::thread::id>>& thread_id)
-        : m_thread_id(&thread_id) {
-        auto const current_thread_id = m_thread_id->load();
-
-        if (!current_thread_id || (*current_thread_id != std::this_thread::get_id())) {
-            m_guard.emplace(mutex);
-            *m_thread_id = std::this_thread::get_id();
-        }
-    }
-
-    Lock_guard(Lock_guard const&) = delete;
-    Lock_guard(Lock_guard&&) = delete;
-
-    ~Lock_guard() { unlock(); }
-
-    Lock_guard& operator=(Lock_guard const&) = delete;
-    Lock_guard& operator=(Lock_guard&&) = delete;
-
-    void unlock() {
-        if (!m_guard) {
-            return;
-        }
-        *m_thread_id = std::nullopt;
-        m_guard.reset();
-    }
-};
-
-/// Callback_aware_mutex does not lock a second time, if this thread already holds the mutex
-///
-/// Using this mutexes do not have to be released when calling callbacks into user code, which might
-/// trigger more actions.
-class Callback_aware_mutex {
-    std::mutex m_mutex;
-    std::atomic<std::optional<std::thread::id>> m_thread_id;
-
-   public:
-    Lock_guard lock() { return Lock_guard{m_mutex, m_thread_id}; }
 };
 
 }  // namespace score::gateway_ipc_binding
