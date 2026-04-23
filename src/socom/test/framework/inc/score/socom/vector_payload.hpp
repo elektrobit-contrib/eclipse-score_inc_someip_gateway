@@ -59,4 +59,4 @@ inline Payload::Sptr make_vector_payload(C const& container) {
 
 }  // namespace score::socom
 
-#endif  // SCORE_SOCOM_VECTOR_PAYLOAD_FACTORY_HPP
+#endif  // SCORE_SOCOM_VECTOR_PAYLOAD_HPP

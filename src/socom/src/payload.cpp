@@ -12,7 +12,7 @@
  ********************************************************************************/
 
 #include <cassert>
-#include <score/socom/vector_payload.hpp>
+#include <score/socom/payload.hpp>
 
 namespace score::cpp {
 
@@ -31,7 +31,17 @@ bool operator==(Payload const& lhs, Payload const& rhs) {
 bool operator!=(Payload const& lhs, Payload const& rhs) { return !(lhs == rhs); }
 
 Payload::Sptr empty_payload() {
-    static auto const empty = make_vector_payload({});
+    class Empty_payload final : public Payload {
+       public:
+        [[nodiscard]] Span data() const noexcept override { return {}; }
+        [[nodiscard]] Writable_span header() noexcept override { return {}; }
+        [[nodiscard]] Span header() const noexcept override { return {}; }
+        [[nodiscard]] std::size_t get_slot_handle() const noexcept override {
+            return kNoSlotHandle;
+        }
+    };
+
+    static auto const empty = std::make_shared<Empty_payload>();
     return empty;
 }
 

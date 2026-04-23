@@ -31,7 +31,6 @@
 #include <score/socom/runtime_mock.hpp>
 #include <score/socom/server_connector.hpp>
 #include <score/socom/server_connector_mock.hpp>
-#include <score/socom/vector_payload.hpp>
 #include <thread>
 
 #include "test_constants.hpp"

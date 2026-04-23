@@ -15,7 +15,6 @@
 
 #include <cstddef>
 #include <score/gateway_ipc_binding/gateway_ipc_binding.hpp>
-#include <score/socom/vector_payload.hpp>
 
 #include "test_constants.hpp"
 #include "test_fixtures.hpp"

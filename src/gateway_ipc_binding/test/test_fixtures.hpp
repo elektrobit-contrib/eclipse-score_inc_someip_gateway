@@ -32,7 +32,6 @@
 #include <score/socom/runtime_mock.hpp>
 #include <score/socom/server_connector.hpp>
 #include <score/socom/server_connector_mock.hpp>
-#include <score/socom/vector_payload.hpp>
 #include <string_view>
 #include <thread>
 #include <utility>

@@ -26,11 +26,11 @@
 #include <score/socom/client_connector.hpp>
 #include <score/socom/client_connector_mock.hpp>
 #include <score/socom/error.hpp>
+#include <score/socom/payload_mock.hpp>
 #include <score/socom/runtime.hpp>
 #include <score/socom/runtime_mock.hpp>
 #include <score/socom/server_connector.hpp>
 #include <score/socom/server_connector_mock.hpp>
-#include <score/socom/vector_payload.hpp>
 #include <string>
 #include <thread>
 
@@ -373,13 +373,15 @@ TEST_P(Gateway_ipc_binding_param_test, server_sends_event_update) {
     Read_only_shared_memory_slot_manager::On_payload_destruction_callback
         payload_destruction_callback;
 
+    auto payload_mock = std::make_shared<socom::Payload_mock>();
+    EXPECT_CALL(*payload_mock, data()).WillRepeatedly(Return(socom::Payload::Span{server_memory}));
     EXPECT_CALL(*mock_read_only_slot_manager,
                 get_payload(Shared_memory_handle{.slot_index = 0,
                                                  .used_bytes = get_server_metadata().slot_size},
                             _))
-        .WillOnce([&server_memory, &payload_destruction_callback](auto, auto callback) {
+        .WillOnce([payload_mock, &payload_destruction_callback](auto, auto callback) {
             payload_destruction_callback = callback;
-            return socom::make_vector_payload(server_memory);
+            return payload_mock;
         });
 
     std::promise<socom::Payload::Sptr> event_update_received_promise;
