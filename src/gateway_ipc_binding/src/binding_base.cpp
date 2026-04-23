@@ -643,9 +643,8 @@ void Gateway_ipc_binding_base::maybe_send_connect_service_locked(Key_t const& ke
     auto send_func = [this, &key](auto const& client_id, auto const& remote_handle,
                                   auto const& connect_service) {
         auto* conn = m_connections.get_reply_channel(client_id);
-        if (conn == nullptr) {
-            return true;
-        }
+        assert(conn != nullptr &&
+               "Improper cleanup done: client_id must always have a valid connection");
 
         m_pending_connects.emplace(remote_handle, {key, client_id});
 
