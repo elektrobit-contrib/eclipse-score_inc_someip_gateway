@@ -90,12 +90,12 @@ inline auto matches_service_definition(socom::Server_service_interface_definitio
     });
 }
 
-inline socom::Writable_payload::Uptr create_payload(
+inline socom::Writable_payload create_payload(
     socom::Enabled_server_connector& connector, Event_id const& event_id,
     std::vector<std::byte> const& expected_payload) {
     auto payload_handle = connector.allocate_event_payload(event_id);
     assert(payload_handle);
-    auto wdata = (*payload_handle)->wdata();
+    auto wdata = payload_handle->wdata();
     assert(wdata.size() >= expected_payload.size());
     std::copy(expected_payload.begin(), expected_payload.end(), wdata.data());
     return std::move(*payload_handle);

@@ -74,10 +74,10 @@ TEST_P(Gateway_ipc_binding_bidirectional_many_events_integration_test,
     for (socom::Event_id current_event_id : event_ids) {
         client.subscribe_event(server.mock_event_subscription_change_cb, current_event_id);
         auto payload_handle = create_payload(*server.connector, current_event_id, expected_payload);
-        payload_handle->wdata()[0] = std::byte{static_cast<std::uint8_t>(
+        payload_handle.wdata()[0] = std::byte{static_cast<std::uint8_t>(
             current_event_id)};  // differentiate payloads of different events
 
-        std::promise<socom::Payload::Uptr> event_update_received_promise;
+        std::promise<socom::Payload> event_update_received_promise;
         EXPECT_CALL(client.mock_event_update_cb, Call(_, current_event_id, _))
             .Times(1)
             .WillOnce([&event_update_received_promise](auto&, auto, auto payload) {
@@ -91,13 +91,12 @@ TEST_P(Gateway_ipc_binding_bidirectional_many_events_integration_test,
         ASSERT_EQ(payload_future.wait_for(very_long_timeout), std::future_status::ready);
 
         auto received_payload = payload_future.get();
-        ASSERT_TRUE(received_payload);
-        EXPECT_EQ(received_payload->data().size(), get_server_metadata().slot_size);
-        EXPECT_EQ(received_payload->data()[0],
+        EXPECT_EQ(received_payload.data().size(), get_server_metadata().slot_size);
+        EXPECT_EQ(received_payload.data()[0],
                   std::byte{static_cast<std::uint8_t>(current_event_id)});
-        EXPECT_EQ(received_payload->data()[1], expected_payload[1]);
-        EXPECT_EQ(received_payload->data()[2], expected_payload[2]);
-        EXPECT_EQ(received_payload->data()[3], expected_payload[3]);
+        EXPECT_EQ(received_payload.data()[1], expected_payload[1]);
+        EXPECT_EQ(received_payload.data()[2], expected_payload[2]);
+        EXPECT_EQ(received_payload.data()[3], expected_payload[3]);
     }
 }
 

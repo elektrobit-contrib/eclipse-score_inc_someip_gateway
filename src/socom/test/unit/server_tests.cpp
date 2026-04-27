@@ -96,7 +96,7 @@ TEST_F(ServerConnectorTest, DisabledServerConnectorMoveConstructorWorks) {
     Disabled_server_connector::Uptr to{std::move(from)};
 
     auto esc = Disabled_server_connector::enable(std::move(to));
-    EXPECT_EQ(ok, esc->update_event(event_id, clone_payload(*real_payload)));
+    EXPECT_EQ(ok, esc->update_event(event_id, clone_payload(real_payload)));
 }
 
 TEST_F(ServerConnectorTest, DisabledServerConnectorMoveAssignmentWorks) {
@@ -105,7 +105,7 @@ TEST_F(ServerConnectorTest, DisabledServerConnectorMoveAssignmentWorks) {
     to = std::move(from);
 
     auto esc = Disabled_server_connector::enable(std::move(to));
-    EXPECT_EQ(ok, esc->update_event(event_id, clone_payload(*real_payload)));
+    EXPECT_EQ(ok, esc->update_event(event_id, clone_payload(real_payload)));
 }
 
 TEST_F(ServerConnectorTest, Enable) {
@@ -229,8 +229,8 @@ TEST_F(ServerConnectorDeathTest,
 TEST_F(ServerConnectorDeathTest, ServerDeletionByOnMethodCallResultsInLoggingAndTermination) {
     auto const el_failure = [this]() {
         auto const self_destruct = [this](Enabled_server_connector& /*server*/,
-                                          Method_id /*method_id*/, Payload const* /*payload*/,
-                                          Method_call_reply_data_opt const& /*reply*/) {
+                                          Method_id /*method_id*/, Payload const& /*payload*/,
+                                          Method_call_reply_data_opt /*reply*/) {
             server.reset();
             return nullptr;
         };
@@ -244,8 +244,7 @@ TEST_F(ServerConnectorDeathTest, ServerDeletionByOnMethodCallResultsInLoggingAnd
 TEST_F(ServerConnectorDeathTest, ServerDeletionByOnMethodCallReplyResultsInLoggingAndTermination) {
     auto const el_failure = [this]() {
         auto const empty_reply = [](Enabled_server_connector& /*server*/, Method_id /*method_id*/,
-                                    Payload const* /*payload*/,
-                                    Method_call_reply_data_opt const& reply) {
+                                    Payload const& /*payload*/, Method_call_reply_data_opt reply) {
             reply->reply(Method_result{Application_return{}});
             return nullptr;
         };

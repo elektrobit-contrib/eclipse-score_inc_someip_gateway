@@ -332,16 +332,16 @@ TEST_P(Gateway_ipc_binding_param_test, server_allocates_event_payload) {
     EXPECT_CALL(get_server_slot_manager(), allocate_slot())
         .WillOnce(Return(Result<Shared_memory_slot_guard>(std::move(slot_guard))));
 
-    auto payload_handle = server_connector->allocate_event_payload(event_id);
-    ASSERT_TRUE(payload_handle);
-    ASSERT_NE(*payload_handle, nullptr);
-    EXPECT_EQ((*payload_handle)->data().size(), get_server_metadata().slot_size);
-    EXPECT_EQ((*payload_handle)->data().data(), server_memory.data());
+    {
+        auto payload_handle = server_connector->allocate_event_payload(event_id);
+        ASSERT_TRUE(payload_handle);
+        EXPECT_EQ(payload_handle->data().size(), get_server_metadata().slot_size);
+        EXPECT_EQ(payload_handle->data().data(), server_memory.data());
 
-    // Test that the allocated slot is released when the payload is destroyed
-    EXPECT_CALL(get_server_slot_manager(), release_slot(Slot_handle(0)))
-        .WillOnce(Return(Result<void>()));
-    payload_handle->reset();
+        // Test that the allocated slot is released when the payload is destroyed
+        EXPECT_CALL(get_server_slot_manager(), release_slot(Slot_handle(0)))
+            .WillOnce(Return(Result<void>()));
+    }
     testing::Mock::VerifyAndClearExpectations(&get_server_slot_manager());
 }
 
@@ -378,15 +378,15 @@ TEST_P(Gateway_ipc_binding_param_test, server_sends_event_update) {
                                                  .used_bytes = get_server_metadata().slot_size},
                             _))
         .WillOnce([&server_memory, &payload_destruction_callback](auto, auto callback) {
-            payload_destruction_callback = callback;
+            payload_destruction_callback = std::move(callback);
 
-            auto payload_mock = std::make_unique<socom::Payload_mock>();
-            EXPECT_CALL(*payload_mock, data())
-                .WillRepeatedly(Return(socom::Payload::Span{server_memory}));
-            return payload_mock;
+            auto span = socom::Payload::Writable_span{
+                const_cast<std::byte*>(server_memory.data()),
+                static_cast<socom::Payload::Writable_span::size_type>(server_memory.size())};
+            return std::optional<socom::Payload>{socom::Payload{span, 0, []() {}}};
         });
 
-    std::promise<socom::Payload::Uptr> event_update_received_promise;
+    std::promise<socom::Payload> event_update_received_promise;
     EXPECT_CALL(mock_event_update_cb, Call(_, event_id, _))
         .Times(1)
         .WillOnce([&event_update_received_promise](auto&, auto, auto payload) {
@@ -399,12 +399,11 @@ TEST_P(Gateway_ipc_binding_param_test, server_sends_event_update) {
     ASSERT_EQ(payload_future.wait_for(very_long_timeout), std::future_status::ready);
 
     auto received_payload = payload_future.get();
-    ASSERT_TRUE(received_payload);
-    EXPECT_EQ(received_payload->data().size(), get_server_metadata().slot_size);
-    EXPECT_EQ(received_payload->data()[0], expected_payload[0]);
-    EXPECT_EQ(received_payload->data()[1], expected_payload[1]);
-    EXPECT_EQ(received_payload->data()[2], expected_payload[2]);
-    EXPECT_EQ(received_payload->data()[3], expected_payload[3]);
+    EXPECT_EQ(received_payload.data().size(), get_server_metadata().slot_size);
+    EXPECT_EQ(received_payload.data()[0], expected_payload[0]);
+    EXPECT_EQ(received_payload.data()[1], expected_payload[1]);
+    EXPECT_EQ(received_payload.data()[2], expected_payload[2]);
+    EXPECT_EQ(received_payload.data()[3], expected_payload[3]);
 
     // test release of read-only payload memory after event update processing is complete
     std::promise<void> payload_released_promise;

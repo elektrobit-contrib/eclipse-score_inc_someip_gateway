@@ -12,6 +12,7 @@
  ********************************************************************************/
 
 #include <cassert>
+#include <optional>
 #include <score/gateway_ipc_binding/shared_memory_slot_manager.hpp>
 #include <utility>
 
@@ -153,43 +154,23 @@ class Shared_memory_slot_manager_impl final : public Shared_memory_slot_manager 
     mutable std::mutex m_mutex;
 };
 
-/// \brief Payload backed by a read-only view of a shared memory slot.
+/// \brief Creates a Payload backed by a read-only view of a shared memory slot.
 ///
-/// Calls the supplied destruction callback when the last reference is released,
+/// Calls the supplied destruction callback when the Payload is destroyed,
 /// allowing the caller to send a Payload_consumed notification.
-class Read_only_shared_memory_payload final : public socom::Payload {
-   public:
-    Read_only_shared_memory_payload(
-        void const* base, Slot_handle slot_index, std::size_t slot_size, std::uint32_t used_bytes,
-        Read_only_shared_memory_slot_manager::On_payload_destruction_callback callback) noexcept
-        : m_data(static_cast<Byte const*>(base) + slot_index * slot_size,
-                 static_cast<std::ptrdiff_t>(
-                     std::min(static_cast<std::size_t>(used_bytes), slot_size))),
-          m_slot_index(slot_index),
-          m_callback(std::move(callback)) {
-        assert(m_callback);
-    }
-
-    ~Read_only_shared_memory_payload() noexcept override {
-        assert(m_callback);
-        m_callback();
-    }
-
-    Read_only_shared_memory_payload(Read_only_shared_memory_payload const&) = delete;
-    Read_only_shared_memory_payload& operator=(Read_only_shared_memory_payload const&) = delete;
-    Read_only_shared_memory_payload(Read_only_shared_memory_payload&&) = delete;
-    Read_only_shared_memory_payload& operator=(Read_only_shared_memory_payload&&) = delete;
-
-    [[nodiscard]] Span data() const noexcept override { return m_data; }
-    [[nodiscard]] Span header() const noexcept override { return {}; }
-    [[nodiscard]] Writable_span header() noexcept override { return {}; }
-    [[nodiscard]] std::size_t get_slot_handle() const noexcept override { return m_slot_index; }
-
-   private:
-    Span m_data;
-    Slot_handle m_slot_index;
-    Read_only_shared_memory_slot_manager::On_payload_destruction_callback m_callback;
-};
+static socom::Payload make_read_only_shared_memory_payload(
+    void const* base, Slot_handle slot_index, std::size_t slot_size, std::uint32_t used_bytes,
+    Read_only_shared_memory_slot_manager::On_payload_destruction_callback callback) noexcept {
+    using Byte = socom::Payload::Byte;
+    auto const* data = static_cast<Byte const*>(base) + slot_index * slot_size;
+    auto const actual_size = std::min(static_cast<std::size_t>(used_bytes), slot_size);
+    // TODO get rid of const_cast
+    // const_cast is safe: Payload::data() returns Span (const), so the data is never modified
+    auto span = socom::Payload::Writable_span{
+        const_cast<Byte*>(data),
+        static_cast<socom::Payload::Writable_span::size_type>(actual_size)};
+    return socom::Payload{span, slot_index, std::move(callback)};
+}
 
 class Read_only_shared_memory_slot_manager_impl final
     : public Read_only_shared_memory_slot_manager {
@@ -211,15 +192,15 @@ class Read_only_shared_memory_slot_manager_impl final
         m_shared_memory->UnlinkFilesystemEntry();
     }
 
-    socom::Payload::Uptr get_payload(
+    std::optional<socom::Payload> get_payload(
         Shared_memory_handle handle,
         On_payload_destruction_callback callback) const noexcept override {
         if (handle.slot_index >= m_slot_count) {
-            return nullptr;
+            return std::nullopt;
         }
 
-        return std::make_unique<Read_only_shared_memory_payload>(
-            m_base_address, handle.slot_index, m_slot_size, handle.used_bytes, std::move(callback));
+        return make_read_only_shared_memory_payload(m_base_address, handle.slot_index, m_slot_size,
+                                                    handle.used_bytes, std::move(callback));
     }
 
    private:

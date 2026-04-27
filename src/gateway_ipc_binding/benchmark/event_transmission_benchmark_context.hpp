@@ -91,7 +91,7 @@ class Event_transmission_benchmark_context final {
 
     [[nodiscard]] Result<std::chrono::nanoseconds> send_and_measure_once() {
         auto const seq = ++sequence_;
-        Result<std::unique_ptr<socom::Writable_payload>> payload_result = MakeUnexpected(
+        Result<socom::Writable_payload> payload_result = MakeUnexpected(
             socom::Server_connector_error::runtime_error_no_client_subscribed_for_event);
         while (!payload_result) {
             payload_result = source_connector_->allocate_event_payload(event_id_);
@@ -102,7 +102,7 @@ class Event_transmission_benchmark_context final {
         }
 
         auto payload = std::move(payload_result).value();
-        auto writable = payload->wdata();
+        auto writable = payload.wdata();
         if (writable.size() < sizeof(seq)) {
             return MakeUnexpected(score::gateway_ipc_binding::Shared_memory_manager_error::
                                       runtime_error_shared_memory_allocation_failed);
@@ -198,9 +198,9 @@ class Event_transmission_benchmark_context final {
 
     void create_connectors() {
         auto on_event_update = [this](score::socom::Client_connector const&, Event_id,
-                                      score::socom::Payload::Uptr payload) {
+                                      score::socom::Payload payload) {
             std::uint64_t received_sequence = 0U;
-            auto const data = payload->data();
+            auto const data = payload.data();
             if (data.size() >= sizeof(received_sequence)) {
                 std::memcpy(&received_sequence, data.data(), sizeof(received_sequence));
             }
@@ -235,7 +235,7 @@ class Event_transmission_benchmark_context final {
         assert(sink_connector_);
 
         score::socom::Disabled_server_connector::Callbacks server_callbacks{
-            [](score::socom::Enabled_server_connector&, Method_id, score::socom::Payload::Uptr,
+            [](score::socom::Enabled_server_connector&, Method_id, score::socom::Payload,
                score::socom::Method_call_reply_data_opt, score::socom::Posix_credentials const&) {
                 return score::socom::Method_invocation::Uptr{};
             },

@@ -249,7 +249,7 @@ void Gateway_ipc_binding_base::handle_request_service_message(Client_id client_i
     // create Client_connector and send offer once Enabled_server_connector is available
     auto const send_event_update = [this, key = key](score::socom::Client_connector const&,
                                                      score::socom::Event_id event_id,
-                                                     score::socom::Payload::Uptr payload) {
+                                                     score::socom::Payload payload) {
         std::lock_guard<std::recursive_mutex> const lock{m_mutex};
         std::size_t recipient_count{0U};
 
@@ -267,8 +267,8 @@ void Gateway_ipc_binding_base::handle_request_service_message(Client_id client_i
                 update_msg.payload.required_id = ids.remote_handle;
                 update_msg.payload.event_id = event_id;
                 update_msg.payload.payload = {
-                    .slot_index = static_cast<std::uint32_t>(payload->get_slot_handle()),
-                    .used_bytes = static_cast<std::uint32_t>(payload->data().size())};
+                    .slot_index = static_cast<std::uint32_t>(payload.get_slot_handle()),
+                    .used_bytes = static_cast<std::uint32_t>(payload.data().size())};
                 auto send_result = conn->send(update_msg);
                 if (send_result) {
                     ++recipient_count;
@@ -311,14 +311,14 @@ void Gateway_ipc_binding_base::handle_request_service_message(Client_id client_i
 
     auto const event_payload_allocate =
         [this, key](score::socom::Client_connector const&,
-                    score::socom::Event_id) -> score::Result<score::socom::Writable_payload::Uptr> {
+                    score::socom::Event_id) -> score::Result<score::socom::Writable_payload> {
         std::lock_guard<std::recursive_mutex> const lock{m_mutex};
 
         auto allocation = m_slot_managers.get_shared_memory_slot_manager(key).allocate_slot();
 
         return allocation.and_then([](auto& guard) {
-            return Result<score::socom::Writable_payload::Uptr>(
-                std::make_unique<Shared_memory_payload>(std::move(guard)));
+            return Result<score::socom::Writable_payload>(
+                make_shared_memory_writable_payload(std::move(guard)));
         });
     };
 
@@ -415,9 +415,11 @@ void Gateway_ipc_binding_base::handle_event_update_message(Client_id client_id,
     auto payload =
         m_read_only_slot_managers
             .get_read_only_shared_memory_slot_manager(mapping_info->get().remote_metadata)
-            .get_payload(msg.payload, on_payload_destruction);
+            .get_payload(msg.payload, std::move(on_payload_destruction));
 
-    auto update_result = enabled_connector->update_event(msg.event_id, std::move(payload));
+    assert(payload.has_value() && "Failed to get payload for event update");
+
+    auto update_result = enabled_connector->update_event(msg.event_id, std::move(*payload));
     (void)update_result;
     assert(update_result);
 }
@@ -524,7 +526,7 @@ void Gateway_ipc_binding_base::handle_connect_service_reply_message(
 
     // Create callbacks for the server connector that send IPC messages
     socom::Disabled_server_connector::Callbacks server_callbacks{
-        [](socom::Enabled_server_connector&, socom::Method_id, socom::Payload::Uptr,
+        [](socom::Enabled_server_connector&, socom::Method_id, socom::Payload,
            socom::Method_call_reply_data_opt,
            socom::Posix_credentials const&) -> socom::Method_invocation::Uptr {
             // No-op callback - remote service methods are handled through IPC
@@ -550,10 +552,11 @@ void Gateway_ipc_binding_base::handle_connect_service_reply_message(
             // No-op callback - remote service event updates are handled through IPC
         },
         [](socom::Enabled_server_connector&,
-           socom::Method_id) -> score::Result<socom::Writable_payload::Uptr> {
+           socom::Method_id) -> score::Result<socom::Writable_payload> {
             // No-op callback - remote service method payloads are handled through IPC
-            // Return null payload as we're not allocating anything for remote service methods
-            return socom::Writable_payload::Uptr{};
+            // Return empty payload as we're not allocating anything for remote service methods
+            return socom::Writable_payload{socom::Writable_payload::Writable_span{},
+                                           socom::kNoSlotHandle, []() {}};
         }};
 
     // Create server connector through the runtime

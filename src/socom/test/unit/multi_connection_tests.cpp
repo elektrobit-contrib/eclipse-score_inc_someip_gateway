@@ -27,7 +27,7 @@ using Conf_instance = std::pair<Server_service_interface_definition, Service_ins
 using MultiConnectionTest = SingleConnectionTest;
 
 TEST_F(MultiConnectionTest, ClientAndServerInDifferentThreadsCommunicateRaceFree) {
-    auto const mr = Method_result{Application_return(clone_payload(*real_payload))};
+    auto const mr = Method_result{Application_return(clone_payload(real_payload))};
     auto const num_method_calls = 100;
     auto const num_events = 1000;
 
@@ -57,7 +57,7 @@ TEST_F(MultiConnectionTest, ClientAndServerInDifferentThreadsCommunicateRaceFree
 }
 
 TEST_F(MultiConnectionTest, ClientAndServerCreatedInDifferentThreadsCommunicateRaceFree) {
-    auto const mr = Method_result{Application_return(clone_payload(*real_payload))};
+    auto const mr = Method_result{Application_return(clone_payload(real_payload))};
     auto const num_method_calls = 100;
     auto const num_events = 1000;
 

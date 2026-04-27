@@ -83,8 +83,7 @@ message::Request_event_update::Return_type Impl::request_event_update(
 }
 
 message::Call_method::Return_type Impl::call_method(
-    Method_id client_id, Payload::Uptr payload,
-    Method_call_reply_data_opt reply_data) const noexcept {
+    Method_id client_id, Payload payload, Method_call_reply_data_opt reply_data) const noexcept {
     if (reply_data) {
         reply_data->set_block_token(create_weak_block_token()
 #ifdef WITH_SOCOM_DEADLOCK_DETECTION
@@ -98,8 +97,7 @@ message::Call_method::Return_type Impl::call_method(
         message::Call_method{client_id, std::move(payload), std::move(reply_data), m_credentials});
 }
 
-Result<std::unique_ptr<Writable_payload>> Impl::allocate_method_call_payload(
-    Method_id method_id) noexcept {
+Result<Writable_payload> Impl::allocate_method_call_payload(Method_id method_id) noexcept {
     return send(message::Allocate_method_call_payload{method_id});
 }
 

@@ -121,44 +121,42 @@ void Client_data::request_event_update(Event_id const& event_id) const {
     m_connector->request_event_update(event_id);
 }
 
-score::Result<std::unique_ptr<Writable_payload>> Client_data::allocate_method_call_payload(
-    Method_id method_id) {
+score::Result<Writable_payload> Client_data::allocate_method_call_payload(Method_id method_id) {
     return m_connector->allocate_method_call_payload(method_id);
 }
 
-void Client_data::call_method(Method_id const& method_id, Payload::Uptr const& payload) {
-    auto result =
-        m_connector->call_method(method_id, clone_payload(*payload),
-                                 Method_call_reply_data{m_method_callback.as_function(), nullptr});
+void Client_data::call_method(Method_id const& method_id, Payload const& payload) {
+    auto result = m_connector->call_method(
+        method_id, clone_payload(payload),
+        Method_call_reply_data{m_method_callback.as_function(), std::nullopt});
     ASSERT_TRUE(result);
     m_method_invocations.emplace_back(std::move(result).value());
 }
 
-void Client_data::call_method(Method_id const& method_id, Payload::Uptr const& payload,
+void Client_data::call_method(Method_id const& method_id, Payload const& payload,
                               Method_reply_callback reply) {
-    call_method(method_id, payload, Method_call_reply_data{std::move(reply), nullptr});
+    call_method(method_id, payload, Method_call_reply_data{std::move(reply), std::nullopt});
 }
 
-void Client_data::call_method(Method_id const& method_id, Payload::Uptr const& payload,
+void Client_data::call_method(Method_id const& method_id, Payload const& payload,
                               Method_call_reply_data reply) {
-    auto result = m_connector->call_method(method_id, clone_payload(*payload), std::move(reply));
+    auto result = m_connector->call_method(method_id, clone_payload(payload), std::move(reply));
     ASSERT_TRUE(result);
     m_method_invocations.emplace_back(std::move(result).value());
 }
 
-void Client_data::call_method_fire_and_forget(Method_id const& method_id,
-                                              Payload::Uptr const& payload) {
+void Client_data::call_method_fire_and_forget(Method_id const& method_id, Payload const& payload) {
     EXPECT_TRUE(m_method_callback_called);
     m_method_invocations.clear();
-    auto result = m_connector->call_method(method_id, clone_payload(*payload));
+    auto result = m_connector->call_method(method_id, clone_payload(payload));
     ASSERT_TRUE(result);
     m_method_invocations.emplace_back(std::move(result).value());
 }
 
 score::Result<Method_invocation::Uptr>
 Client_data::call_method_fire_and_forget_and_return_invocation(Method_id const& method_id,
-                                                               Payload::Uptr const& payload) {
-    return m_connector->call_method(method_id, clone_payload(*payload));
+                                                               Payload const& payload) {
+    return m_connector->call_method(method_id, clone_payload(payload));
 }
 
 std::atomic<bool> const& Client_data::expect_service_state_change(Service_state const& state) {
@@ -195,7 +193,7 @@ std::atomic<bool> const& Client_data::expect_service_state_change(
 }
 
 std::atomic<bool> const& Client_data::expect_event_payload_allocation(
-    Event_id const& event_id, score::Result<std::unique_ptr<Writable_payload>> result) {
+    Event_id const& event_id, score::Result<Writable_payload> result) {
     EXPECT_CALL(m_callbacks, on_event_payload_allocate(_, event_id))
         .WillOnce(DoAll(Assign(&m_event_payload_allocate_called, true),
                         Return(ByMove(std::move(result)))));
@@ -205,13 +203,13 @@ std::atomic<bool> const& Client_data::expect_event_payload_allocation(
 }
 
 std::atomic<bool> const& Client_data::expect_event_update(Event_id const& event_id,
-                                                          Payload::Uptr const& payload) {
+                                                          Payload const& payload) {
     return expect_event_updates(1, event_id, payload);
 }
 
 std::atomic<bool> const& Client_data::expect_event_updates(size_t const& count,
                                                            Event_id const& event_id,
-                                                           Payload::Uptr const& payload) {
+                                                           Payload const& payload) {
     auto const check_update_count = [this, count](auto const& /*cc*/, auto /*event_id*/,
                                                   auto const& /*payload*/) {
         m_num_event_callback_called++;
@@ -223,7 +221,7 @@ std::atomic<bool> const& Client_data::expect_event_updates(size_t const& count,
     EXPECT_TRUE(m_event_callback_called);
     m_event_callback_called = false;
     m_num_event_callback_called = 0;
-    EXPECT_CALL(m_callbacks, on_event_update(_, event_id, payload_eq(*payload)))
+    EXPECT_CALL(m_callbacks, on_event_update(_, event_id, payload_eq(payload)))
         .Times(count)
         .WillRepeatedly(check_update_count);
     return m_event_callback_called;
@@ -231,56 +229,57 @@ std::atomic<bool> const& Client_data::expect_event_updates(size_t const& count,
 
 std::future<void> Client_data::expect_event_updates_min_number(std::size_t const& count,
                                                                Event_id const& event_id,
-                                                               Payload::Uptr const& payload) {
+                                                               Payload const& payload) {
     std::promise<void> event_received;
     auto future = event_received.get_future();
 
     auto const check_update_count =
         create_check_update_count(m_num_event_callback_called, count, std::move(event_received));
 
-    EXPECT_CALL(m_callbacks, on_event_update(_, event_id, payload_eq(*payload)))
+    EXPECT_CALL(m_callbacks, on_event_update(_, event_id, payload_eq(payload)))
         .WillRepeatedly(check_update_count);
     return future;
 }
 
 std::atomic<bool> const& Client_data::expect_requested_event_update(Event_id const& event_id,
-                                                                    Payload::Uptr const& payload) {
+                                                                    Payload const& payload) {
     EXPECT_TRUE(m_event_request_callback_called);
     m_event_request_callback_called = false;
-    EXPECT_CALL(m_callbacks, on_requested_event_update(_, event_id, payload_eq(*payload)))
+    EXPECT_CALL(m_callbacks, on_requested_event_update(_, event_id, payload_eq(payload)))
         .WillOnce(Assign(&m_event_request_callback_called, true));
     return m_event_request_callback_called;
 }
 
-std::future<void> Client_data::expect_requested_event_updates_min_number(
-    std::size_t const& count, Event_id const& event_id, Payload::Uptr const& payload) {
+std::future<void> Client_data::expect_requested_event_updates_min_number(std::size_t const& count,
+                                                                         Event_id const& event_id,
+                                                                         Payload const& payload) {
     std::promise<void> event_received;
     auto future = event_received.get_future();
 
     auto const check_update_count =
         create_check_update_count(m_num_event_callback_called, count, std::move(event_received));
 
-    EXPECT_CALL(m_callbacks, on_requested_event_update(_, event_id, payload_eq(*payload)))
+    EXPECT_CALL(m_callbacks, on_requested_event_update(_, event_id, payload_eq(payload)))
         .WillRepeatedly(check_update_count);
     return future;
 }
 
-std::atomic<bool> const& Client_data::expect_and_request_event_update(
-    Event_id const& event_id, Payload::Uptr const& payload) {
+std::atomic<bool> const& Client_data::expect_and_request_event_update(Event_id const& event_id,
+                                                                      Payload const& payload) {
     auto const& cb_called = expect_requested_event_update(event_id, payload);
     request_event_update(event_id);
     return cb_called;
 }
 
 std::atomic<bool> const& Client_data::expect_and_call_method(Method_id const& method_id,
-                                                             Payload::Uptr const& payload,
+                                                             Payload const& payload,
                                                              Method_result const& method_result) {
     return expect_and_call_methods(1, method_id, payload, method_result);
 }
 
 std::atomic<bool> const& Client_data::expect_and_call_methods(size_t const& count,
                                                               Method_id const& method_id,
-                                                              Payload::Uptr const& payload,
+                                                              Payload const& payload,
                                                               Method_result const& method_result) {
     auto const check_update_count = [this, count](auto const& /*method_result*/) {
         m_num_method_callback_called++;
@@ -328,7 +327,7 @@ Client_data::Vector Client_data::create_clients(Connector_factory& factory, size
 }
 
 Callbacks_called_t Client_data::expect_event_update(Vector& clients, Event_id const event_id,
-                                                    Payload::Uptr const& payload) {
+                                                    Payload const& payload) {
     auto cb = Callbacks_called_t{};
     for (auto& cc_cb : clients) {
         if (nullptr == cc_cb) {
@@ -342,7 +341,7 @@ Callbacks_called_t Client_data::expect_event_update(Vector& clients, Event_id co
 
 Callbacks_called_t Client_data::expect_and_request_event_update(Vector& clients,
                                                                 Event_id const event_id,
-                                                                Payload::Uptr const& payload) {
+                                                                Payload const& payload) {
     auto cb_called = Callbacks_called_t{};
     for (auto& client : clients) {
         if (nullptr == client) {
@@ -355,7 +354,7 @@ Callbacks_called_t Client_data::expect_and_request_event_update(Vector& clients,
 }
 
 Callbacks_called_t Client_data::expect_and_call_method(Vector& clients, Method_id const method_id,
-                                                       Payload::Uptr const& payload,
+                                                       Payload const& payload,
                                                        Method_result const& method_result) {
     auto cb_called = Callbacks_called_t{};
     for (auto& client : clients) {

@@ -26,10 +26,10 @@ namespace {
 class Read_only_shared_memory_slot_manager_benchmark final
     : public Read_only_shared_memory_slot_manager {
    public:
-    socom::Payload::Uptr get_payload(
+    std::optional<socom::Payload> get_payload(
         Shared_memory_handle,
         [[maybe_unused]] On_payload_destruction_callback callback) const noexcept override {
-        return nullptr;
+        return std::nullopt;
     }
 };
 

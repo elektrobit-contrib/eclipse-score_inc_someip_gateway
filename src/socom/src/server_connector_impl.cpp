@@ -114,7 +114,7 @@ Impl* Impl::disable() noexcept {
     return this;
 }
 
-Result<std::unique_ptr<Writable_payload>> Impl::allocate_event_payload(Event_id event_id) noexcept {
+Result<Writable_payload> Impl::allocate_event_payload(Event_id event_id) noexcept {
     if (event_id >= m_configuration.get_num_events()) {
         return MakeUnexpected(Server_connector_error::logic_error_id_out_of_range);
     }
@@ -137,7 +137,7 @@ Server_service_interface_definition const& Impl::get_configuration() const noexc
 
 Service_instance const& Impl::get_service_instance() const noexcept { return m_instance; }
 
-Result<Blank> Impl::update_event(Event_id server_id, Payload::Uptr payload) noexcept {
+Result<Blank> Impl::update_event(Event_id server_id, Payload payload) noexcept {
     if (server_id >= m_configuration.get_num_events()) {
         return MakeUnexpected(Server_connector_error::logic_error_id_out_of_range);
     }
@@ -154,7 +154,7 @@ Result<Blank> Impl::update_event(Event_id server_id, Payload::Uptr payload) noex
     return Result<Blank>{};
 }
 
-Result<Blank> Impl::update_requested_event(Event_id server_id, Payload::Uptr payload) noexcept {
+Result<Blank> Impl::update_requested_event(Event_id server_id, Payload payload) noexcept {
     if (server_id >= m_configuration.get_num_events()) {
         return MakeUnexpected(Server_connector_error::logic_error_id_out_of_range);
     }

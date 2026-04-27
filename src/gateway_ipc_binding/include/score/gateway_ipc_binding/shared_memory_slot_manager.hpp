@@ -19,6 +19,7 @@
 #include <cstddef>
 #include <map>
 #include <memory>
+#include <optional>
 #include <score/gateway_ipc_binding/gateway_ipc_binding.hpp>
 #include <score/socom/payload.hpp>
 #include <score/socom/service_interface_identifier.hpp>
@@ -256,7 +257,7 @@ class Read_only_shared_memory_slot_manager {
 
     /// \brief Callback for notifying when a payload is destroyed, allowing cleanup of associated
     /// resources
-    using On_payload_destruction_callback = std::function<void()>;
+    using On_payload_destruction_callback = socom::Payload::Payload_destroyed;
 
     Read_only_shared_memory_slot_manager() = default;
 
@@ -269,9 +270,8 @@ class Read_only_shared_memory_slot_manager {
     /// management.
     /// \param handle Shared memory handle identifying the slot
     /// \param callback Callback to be called when the returned payload is destroyed
-    /// \return Result containing a shared pointer to the payload on success, or a nullptr on
-    /// failure
-    virtual socom::Payload::Uptr get_payload(
+    /// \return A Payload object on success, or std::nullopt on failure
+    virtual std::optional<socom::Payload> get_payload(
         Shared_memory_handle handle, On_payload_destruction_callback callback) const noexcept = 0;
 };
 

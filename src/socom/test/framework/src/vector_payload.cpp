@@ -12,69 +12,33 @@
  ********************************************************************************/
 
 #include <cassert>
+#include <memory>
 #include <score/socom/vector_payload.hpp>
 
 namespace score::socom {
 
-namespace {
-
-/// Payload implementation (example) based on a std::vector<> container
-class Vector_payload final : public Payload {
-    std::size_t m_lead_offset;
-    std::size_t m_header_size;
-    Vector_buffer m_buffer;
-
-   public:
-    Vector_payload(std::size_t const lead_offset, std::size_t const header_size,
-                   Vector_buffer buffer)
-        : m_lead_offset{lead_offset}, m_header_size{header_size}, m_buffer{std::move(buffer)} {}
-
-    explicit Vector_payload(std::size_t const header_size, Vector_buffer buffer)
-        : Vector_payload{0U, header_size, std::move(buffer)} {}
-
-    Vector_payload(Vector_payload const&) = delete;
-    Vector_payload(Vector_payload&&) = delete;
-    Vector_payload& operator=(Vector_payload const&) = delete;
-    Vector_payload& operator=(Vector_payload&&) = delete;
-    ~Vector_payload() noexcept override = default;
-
-    [[nodiscard]] Span data() const noexcept override {
-        Span const span{m_buffer};
-        std::size_t const num_bytes{m_buffer.size() - m_header_size - m_lead_offset};
-        return span.last(static_cast<Span::size_type>(num_bytes));
-    }
-
-    [[nodiscard]] Writable_span header() noexcept override {
-        Writable_span const span{m_buffer};
-        return span.subspan(m_lead_offset, m_header_size);
-    }
-
-    [[nodiscard]] Span header() const noexcept override {
-        Span const span{m_buffer};
-        return span.subspan(m_lead_offset, m_header_size);
-    }
-
-    [[nodiscard]] std::size_t get_slot_handle() const noexcept override { return kNoSlotHandle; }
-};
-
-}  // namespace
-
-Payload::Uptr make_vector_payload(Vector_buffer buffer) {
-    return std::make_unique<Vector_payload>(0, std::move(buffer));
+Payload make_vector_payload(Vector_buffer buffer) {
+    auto buf = std::make_unique<Vector_buffer>(std::move(buffer));
+    auto span = Payload::Writable_span{*buf};
+    return Payload{span, kNoSlotHandle, [buf = std::move(buf)]() {}};
 }
 
-Payload::Uptr make_vector_payload(std::size_t header_size, Vector_buffer buffer) {
+Payload make_vector_payload(std::size_t header_size, Vector_buffer buffer) {
     assert(header_size <= buffer.size());
-    return std::make_unique<Vector_payload>(header_size, std::move(buffer));
+    auto buf = std::make_unique<Vector_buffer>(std::move(buffer));
+    auto span = Payload::Writable_span{*buf};
+    return Payload{span, kNoSlotHandle, [buf = std::move(buf)]() {}, header_size};
 }
 
-Payload::Uptr make_vector_payload(std::size_t lead_offset, std::size_t header_size,
-                                  Vector_buffer buffer) {
+Payload make_vector_payload(std::size_t lead_offset, std::size_t header_size,
+                            Vector_buffer buffer) {
     assert((lead_offset + header_size) <= buffer.size());
-    return std::make_unique<Vector_payload>(lead_offset, header_size, std::move(buffer));
+    auto buf = std::make_unique<Vector_buffer>(std::move(buffer));
+    auto span = Payload::Writable_span{*buf};
+    return Payload{span, kNoSlotHandle, [buf = std::move(buf)]() {}, header_size, lead_offset};
 }
 
-Payload::Uptr clone_payload(Payload const& p) {
+Payload clone_payload(Payload const& p) {
     auto header = p.header();
     auto data = p.data();
     Vector_buffer buf(header.size() + data.size());

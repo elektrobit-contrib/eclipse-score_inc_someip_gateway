@@ -15,6 +15,7 @@
 #define SRC_GATEWAY_IPC_BINDING_SRC_SHARED_MEMORY_MANAGERS
 
 #include <cassert>
+#include <optional>
 #include <score/gateway_ipc_binding/gateway_ipc_binding.hpp>
 #include <score/gateway_ipc_binding/shared_memory_slot_manager.hpp>
 #include <unordered_map>
@@ -27,7 +28,7 @@ class Shared_memory_managers {
     Keys* m_keys;
 
     struct Shared_memory_allocation {
-        socom::Payload::Uptr payload;
+        std::optional<socom::Payload> payload;
         std::size_t pending_consumers{0U};
     };
 
@@ -73,16 +74,15 @@ class Shared_memory_managers {
         return get_shared_memory_metadata(slot_manager);
     }
 
-    void insert_allocation(Key_t const& key, socom::Payload::Uptr payload,
-                           std::size_t consumer_count) {
-        if (payload == nullptr || consumer_count == 0U) {
+    void insert_allocation(Key_t const& key, socom::Payload payload, std::size_t consumer_count) {
+        if (consumer_count == 0U) {
             return;
         }
 
         auto& allocations_by_handle = m_shared_memory_allocations[key];
-        auto const slot_handle = payload->get_slot_handle();
+        auto const slot_handle = payload.get_slot_handle();
         auto& allocation = allocations_by_handle[slot_handle];
-        if (allocation.payload == nullptr) {
+        if (!allocation.payload.has_value()) {
             allocation.payload = std::move(payload);
         }
         allocation.pending_consumers += consumer_count;

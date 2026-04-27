@@ -136,12 +136,9 @@ TEST_P(Gateway_ipc_binding_connected_bidirectional_integration_test,
 
     auto payload_handle = server.connector->allocate_event_payload(event_id);
     ASSERT_TRUE(payload_handle);
-    ASSERT_NE(*payload_handle, nullptr);
-    EXPECT_EQ((*payload_handle)->data().size(), get_server_metadata().slot_size);
-    EXPECT_NE((*payload_handle)->data().data(), nullptr);
-
+    EXPECT_EQ(payload_handle->data().size(), get_server_metadata().slot_size);
+    EXPECT_NE(payload_handle->data().data(), nullptr);
     // Test that the allocated slot is released when the payload is destroyed
-    payload_handle->reset();
 }
 
 TEST_P(Gateway_ipc_binding_connected_bidirectional_integration_test,
@@ -156,12 +153,11 @@ TEST_P(Gateway_ipc_binding_connected_bidirectional_integration_test,
        exhausted_event_payload_slots_return_error) {
     client.subscribe_event(server.mock_event_subscription_change_cb, event_id);
 
-    std::vector<socom::Writable_payload::Uptr> payload_handles;
+    std::vector<std::optional<socom::Writable_payload>> payload_handles;
 
     for (std::size_t i = 0; i < get_server_metadata().slot_count; ++i) {
         auto payload_handle = server.connector->allocate_event_payload(event_id);
         ASSERT_TRUE(payload_handle);
-        ASSERT_NE(*payload_handle, nullptr);
         payload_handles.push_back(std::move(*payload_handle));
     }
 
@@ -181,7 +177,7 @@ TEST_P(Gateway_ipc_binding_connected_bidirectional_integration_test, server_send
 
     auto payload_handle = create_payload(*server.connector, event_id, expected_payload);
 
-    std::promise<socom::Payload::Uptr> event_update_received_promise;
+    std::promise<socom::Payload> event_update_received_promise;
     EXPECT_CALL(client.mock_event_update_cb, Call(_, event_id, _))
         .Times(1)
         .WillOnce([&event_update_received_promise](auto&, auto, auto payload) {
@@ -194,27 +190,26 @@ TEST_P(Gateway_ipc_binding_connected_bidirectional_integration_test, server_send
     ASSERT_EQ(payload_future.wait_for(very_long_timeout), std::future_status::ready);
 
     auto received_payload = payload_future.get();
-    ASSERT_TRUE(received_payload);
-    EXPECT_EQ(received_payload->data().size(), get_server_metadata().slot_size);
-    EXPECT_EQ(received_payload->data()[0], expected_payload[0]);
-    EXPECT_EQ(received_payload->data()[1], expected_payload[1]);
-    EXPECT_EQ(received_payload->data()[2], expected_payload[2]);
-    EXPECT_EQ(received_payload->data()[3], expected_payload[3]);
+    EXPECT_EQ(received_payload.data().size(), get_server_metadata().slot_size);
+    EXPECT_EQ(received_payload.data()[0], expected_payload[0]);
+    EXPECT_EQ(received_payload.data()[1], expected_payload[1]);
+    EXPECT_EQ(received_payload.data()[2], expected_payload[2]);
+    EXPECT_EQ(received_payload.data()[3], expected_payload[3]);
 }
 
 TEST_P(Gateway_ipc_binding_connected_bidirectional_integration_test,
        client_keeps_event_payloads_until_server_receives_consumed_notification) {
     client.subscribe_event(server.mock_event_subscription_change_cb, event_id);
 
-    std::vector<socom::Payload::Uptr> payload_handles;
+    std::vector<socom::Payload> payload_handles;
 
     for (std::size_t i = 0; i < get_server_metadata().slot_count; ++i) {
         auto payload_handle = create_payload(*server.connector, event_id, expected_payload);
-        ASSERT_NE(payload_handle, nullptr);
-        payload_handle->wdata()[0] =
+        ASSERT_NE(payload_handle.data().size(), 0);
+        payload_handle.wdata()[0] =
             std::byte{static_cast<std::uint8_t>(i)};  // differentiate payloads
 
-        std::promise<socom::Payload::Uptr> event_update_received_promise;
+        std::promise<socom::Payload> event_update_received_promise;
         EXPECT_CALL(client.mock_event_update_cb, Call(_, event_id, _))
             .Times(1)
             .WillOnce([&event_update_received_promise](auto&, auto, auto payload) {
@@ -227,9 +222,8 @@ TEST_P(Gateway_ipc_binding_connected_bidirectional_integration_test,
         ASSERT_EQ(payload_future.wait_for(very_long_timeout), std::future_status::ready);
 
         auto received_payload = payload_future.get();
-        ASSERT_TRUE(received_payload);
-        EXPECT_EQ(received_payload->data().size(), get_server_metadata().slot_size);
-        EXPECT_EQ(received_payload->data()[0], std::byte{static_cast<std::uint8_t>(i)});
+        EXPECT_EQ(received_payload.data().size(), get_server_metadata().slot_size);
+        EXPECT_EQ(received_payload.data()[0], std::byte{static_cast<std::uint8_t>(i)});
 
         payload_handles.push_back(std::move(received_payload));
     }

@@ -24,24 +24,14 @@ bool operator==(span<T> const& lhs, span<T> const& rhs) {
 
 namespace score::socom {
 
-bool operator==(Payload const& lhs, Payload const& rhs) {
-    return (lhs.header() == rhs.header()) && (lhs.data() == rhs.data());
+namespace detail {
+bool Payload_impl::operator==(Payload_impl const& other) const noexcept {
+    return header() == other.header() && data() == other.data();
 }
+}  // namespace detail
 
-bool operator!=(Payload const& lhs, Payload const& rhs) { return !(lhs == rhs); }
-
-Payload::Uptr empty_payload() {
-    class Empty_payload final : public Payload {
-       public:
-        [[nodiscard]] Span data() const noexcept override { return {}; }
-        [[nodiscard]] Writable_span header() noexcept override { return {}; }
-        [[nodiscard]] Span header() const noexcept override { return {}; }
-        [[nodiscard]] std::size_t get_slot_handle() const noexcept override {
-            return kNoSlotHandle;
-        }
-    };
-
-    return std::make_unique<Empty_payload>();
+Payload empty_payload() {
+    return Payload{Payload::Writable_span{}, kNoSlotHandle, []() {}};
 }
 
 }  // namespace score::socom
