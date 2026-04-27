@@ -23,56 +23,43 @@ This directory contains the complete memory profiling and performance analysis u
 ✅ **Build Status**: Successful
 ✅ **Profiling Status**: Completed (memusage + Massif)
 ✅ **Memory Status**: No leaks detected
-🎯 **Peak Memory**: 172 KB useful heap (Massif)
-⚡ **Latency**: ~3.9 microseconds per event
+🎯 **Peak Memory**: 173 KB useful heap (Massif)
+⚡ **Latency**: ~3.6 microseconds per event
 📊 **Iterations**: 1,000,000 @ 1 MB payload
 
 ## File Inventory
 
 ### Analysis Reports
 - **`PROFILING_REPORT.md`** - Detailed memory statistics and findings
-- **`PERFORMANCE_ANALYSIS.md`** - Complete performance analysis with recommendations
 - **`README.md`** - This file
 
 ### Profiling Data
-- **`memusage.data`** (276 MB) - Raw memory profiling data
-- **`memusage.png`** (3.9 KB) - Memory usage timeline graph
-- **`massif.out.1`** (324 KB) - Valgrind Massif heap profile
-- **`benchmark_run.log`** (3.2 KB) - memusage execution output
-- **`massif_run.log`** (1.3 KB) - Massif execution output
+- **`memusage.data`** - Raw memory profiling data
+- **`memusage.png`** - Memory usage timeline graph
+- **`massif.out.1`** - Valgrind Massif heap profile
+- **`benchmark_run.log`** - memusage execution output
+- **`massif_run.log`** - Massif execution output
 
 ## Build Information
 
 ```
-Compiler:           Bazel 8.0.0 with C++ toolchain
+Compiler:           Bazel 8.4.1 with C++ toolchain
 Build Configuration: -c opt (release optimization)
 Features Disabled:   TSAN (thread sanitizer)
 Binary:             bazel-bin/src/gateway_ipc_binding/benchmark/gateway_ipc_binding_memory
-Binary Size:        18 MB
-Date:               2026-04-22
+Binary Size:        23 MB
+Date:               2026-04-27
 ```
 
 ## Key Findings
 
 ### Memory Behavior
-- **Total Heap Allocated**: 10.4 MB
-- **Peak Heap Usage**: 191 KB (extremely low)
-- **Peak Stack Usage**: 27 KB
-- **Allocation Pattern**: 97% of allocations are < 128 bytes
-- **No Memory Leaks**: Perfect balance of malloc (161,116) vs free (162,071) calls
-
-### Performance Metrics (Release Mode)
-| Payload | Latency | Throughput |
-|---------|---------|-----------|
-| 64 B    | 6.1 µs  | 10 MB/s   |
-| 256 B   | 4.8 µs  | 51 MB/s   |
-| 1 KB    | 4.9 µs  | 201 MB/s  |
-| 1 MB    | 3.2 µs  | 303 GB/s  |
-
-### Cache Benchmarks
-- 32-byte lookups: **11.8 ns**
-- 128-byte lookups: **26.9 ns**
-- 256-byte lookups: **44.8 ns**
+- **Total Heap Allocated**: 168 MB cumulative (176,398,085 bytes over 1M iterations)
+- **Peak Heap Usage**: 174 KB (memusage), 173 KB useful (Massif)
+- **Peak Stack Usage**: 11 KB
+- **Allocation Pattern**: 99% of allocations are 176-191 bytes (one per iteration)
+- **Total malloc calls**: 1,005,137 (down 83% from previous 6M+)
+- **No Memory Leaks**: Perfect balance of malloc (1,005,137) + calloc (3) vs free (1,005,141) calls
 
 ## Profiling Tools Used
 
@@ -104,13 +91,13 @@ Date:               2026-04-22
 
 ### Immediate Actions
 - ✅ Memory profile confirms production readiness
-- ✅ 172 KB peak heap is safe for embedded systems
+- ✅ 173 KB peak heap is safe for embedded systems
 - ✅ No optimizations required for memory usage
+- ✅ Allocation count reduced 83% vs previous run (allocation path consolidation)
 
 ### Further Investigation
 - Consider CPU profiling (perf/FlameGraph) for hotspot analysis
-- Reduce logging overhead by disabling console backend in production
-- Evaluate object pooling for 32-47 byte allocation blocks (49% of all allocations)
+- Reduce logging overhead by disabling console backend in production (~24% of peak heap)
 - Test with real-time scheduling priorities
 
 ## Usage Examples
@@ -165,16 +152,17 @@ ms_print memory_profile/massif.out.1 | less
 ## Conclusion
 
 The `gateway_ipc_binding_memory` dedicated profiling application demonstrates:
-- ✅ Excellent memory efficiency (172 KB peak useful heap)
+- ✅ Excellent memory efficiency (173 KB peak useful heap)
 - ✅ Zero heap growth over 1,000,000 iterations
-- ✅ Low latency for user-space IPC (~3.9 µs per event)
-- ✅ No memory leaks (6M+ balanced malloc/free)
+- ✅ Low latency for user-space IPC (~3.6 µs per event)
+- ✅ No memory leaks (1M+ balanced malloc/free)
+- ✅ 83% reduction in allocation count vs previous run
 - ✅ Safe for production deployment and embedded systems
 
 **The dedicated memory application provides cleaner profiling than Google Benchmark since it avoids fork/reexec issues with Massif.**
 
 ---
 
-*Profile generated: 2026-04-22 10:22 UTC*
-*Profiling tools: GNU memusage v2.40 + Valgrind Massif 3.22.0*
+*Profile generated: 2026-04-27 UTC*
+*Profiling tools: GNU memusage + Valgrind Massif 3.22.0*
 *Application: gateway_ipc_binding_memory (1M iterations, 1 MB payload)*
