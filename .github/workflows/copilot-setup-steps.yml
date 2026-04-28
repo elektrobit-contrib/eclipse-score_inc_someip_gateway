@@ -1,5 +1,5 @@
 # *******************************************************************************
-# Copyright (c) 2024 Contributors to the Eclipse Foundation
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -11,15 +11,28 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-# Workflow configuration for S-CORE CI - Bazel Build & Test module
-# This workflow runs Bazel build and test when triggered by specific pull request events.
-
-name: Build & Test module (with host toolchain)
+# Reusable workflow that prepares the repository for Copilot cloud coding tasks.
+name: Copilot Setup Steps
+# Automatically run the setup steps when they are changed to allow for easy validation, and
+# allow manual testing through the repository's "Actions" tab
 on:
-  workflow_call:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
 jobs:
-  build_and_test_host:
+  # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
+  copilot-setup-steps:
     runs-on: ubuntu-24.04
+
+    # Set the permissions to the lowest permissions possible needed for your steps.
+    # Copilot will be given its own token for its operations.
+    permissions:
+      # If you want to clone the repository as part of your setup steps, for example to install dependencies, you'll need the `contents: read` permission.
+      # If you don't clone the repository in your setup steps, Copilot will do this for you automatically after the steps complete.
+      contents: read
+
     steps:
       - uses: eclipse-score/more-disk-space@v1
       - name: Checkout repository
@@ -34,23 +47,10 @@ jobs:
           output-base: /mnt/.bazel
           # Avoid downloading Bazel every time.
           bazelisk-cache: true
-          # Store build cache per workflow.
-          disk-cache: ${{ github.workflow }}
           # Share repository cache between workflows.
           repository-cache: true
           # Cache external/
           external-cache: true
-          cache-save: ${{ github.event_name == 'push' }}
+          cache-save: false
       - name: Allow linux-sandbox
         uses: ./.github/actions/unblock_user_namespace_for_linux_sandbox
-      - run: df -h
-      - name: Bazel build targets
-        run: |
-          bazel build //...
-      - run: df -h
-        if: always()
-      - name: Bazel test targets
-        run: |
-          bazel test //... --build_tests_only
-      - run: df -h
-        if: always()
