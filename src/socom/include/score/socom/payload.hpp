@@ -71,8 +71,7 @@ class Payload_impl final {
     /// \brief Retrieves the payload data.
     /// \return Span of payload data.
     [[nodiscard]] Writable_span data() const noexcept {
-        std::size_t const num_bytes{m_data.size() - m_header_size - m_lead_offset};
-        return m_data.last(num_bytes);
+        return m_data.subspan(m_lead_offset + m_header_size);
     }
 
     /// \brief Retrieves the header data.
