@@ -53,7 +53,7 @@ BAZEL_TARGET="$1"
 shift || true
 
 # Validate Valgrind is available
-command -v valgrind >/dev/null 2>&1 || die "valgrind not found. Install: apt install valgrind-tools"
+command -v valgrind >/dev/null 2>&1 || die "valgrind not found. Install: apt install valgrind"
 
 # Step 1: Build with release optimizations, no sanitizers
 info "Building ${BAZEL_TARGET} with -c opt --features=-tsan..."

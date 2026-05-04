@@ -123,7 +123,7 @@ See [INTERPRETATION.md](./references/INTERPRETATION.md) for understanding:
 
 | Issue | Solution |
 |-------|----------|
-| `valgrind: command not found` | Install: `apt install valgrind-tools` |
+| `valgrind: command not found` | Install: `apt install valgrind` |
 | `memusage: command not found` | Install: `apt install libc-bin` (usually included) |
 | No output file created | Ensure target completed successfully (check stderr) |
 | Massif output too small | Increase workload: adjust benchmark filters or iteration counts |
