@@ -1,7 +1,7 @@
 ---
 name: fix-failing-test
 description: 'Fix a failing test in this C++/Bazel/Python project. Use when a test is red, flaky, or crashes (segfault, assertion, timeout). Covers: reproducing the failure, root-cause analysis, surgical fix, and verification. Trigger phrases: fix failing test, test is broken, test crashes, test flakes, make test pass.'
-argument-hint: 'test target or test name, e.g. //src/gateway_ipc_binding/test:gateway_ipc_binding_test'
+argument-hint: 'test target or test name, e.g. //src/socom/test/unit:socom_test'
 ---
 
 <!--
@@ -38,6 +38,7 @@ bazel test <target> --runs_per_test=5 --test_output=all
 ```
 - Capture the full error message, assertion, or signal (SIGSEGV, SIGABRT, exit 130).
 - Note whether the failure is deterministic or intermittent (flaky).
+- Consider installing the `stress` apt package and using the `stress` command to increase system load and make timing-sensitive flakes more likely to reproduce.
 
 ### 2. Read the Test and Production Code
 - Open the test file and the unit(s) under test.
@@ -61,7 +62,6 @@ bazel test <target> --runs_per_test=5 --test_output=all
 ### 5. Implement the Fix
 - Make the **minimum change** that fixes the root cause.
 - Do not change unrelated code, add logging, or refactor.
-- For reconnect/state-machine bugs: replay pending state after reconnect, use `insert_or_assign` for reused handles, and do not advance state when a send fails.
 
 ### 6. Verify
 ```bash
@@ -71,14 +71,13 @@ bazel test <target> --test_output=all
 # Run the full test suite to check for regressions
 bazel test //...
 ```
-- For flaky fixes: run several times (`--runs_per_test=10`) to confirm stability.
+- For flaky fixes: run several times (`--runs_per_test=10`) to confirm stability and optionally use the `stress` command to increase system load and make timing-sensitive flakes more likely to reproduce.
 
 ### 7. Record New Patterns
 - If the root cause was non-obvious or flaky, add a bullet to the relevant file under `/memories/repo/` so future agents avoid the same investigation.
 
 ## Project-Specific Notes
 - **Build system**: Bazel — always use `bazel test`, not direct binary execution, to get correct runfiles and sandbox.
-- **IPC tests**: `gateway_ipc_binding` tests exercise reconnect logic; see `/memories/repo/gateway_ipc_binding_reconnect_flake.md` for known pitfalls.
 - **Integration tests**: live under `//tests/integration`; require two daemons (`gatewayd` + `someipd`) and vsomeip config from `tests/integration/vsomeip-local.json`.
 - **Python tests**: use `py_pytest` rule; run with `bazel test //tests/integration:integration --test_output=all`.
 - **License headers**: any new source file must include the Apache 2.0 header from `AGENTS.md`.
