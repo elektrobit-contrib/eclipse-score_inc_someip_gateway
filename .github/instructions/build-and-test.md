@@ -18,7 +18,7 @@ applyTo: "**/BUILD*,**/MODULE*,tests/**,**/*_test.{cpp,cc,py},**/*_test.rs"
 
 # Build & Test
 
-**Bazel is the primary build system.** Python 3.12 is required; pinned in MODULE.bazel.
+**Bazel is the primary build system.**
 
 ## Commands
 

@@ -22,7 +22,6 @@ The S-CORE SOME/IP Gateway bridges the SCORE middleware with SOME/IP communicati
 | What | Value |
 |------|-------|
 | Build system | **Bazel** |
-| Python version | 3.12 (pinned in MODULE.bazel) |
 | Build | `bazel build //src/gatewayd:gatewayd` |
 | Test all | `bazel test //...` |
 | Unit tests | `bazel test //src/...` |
