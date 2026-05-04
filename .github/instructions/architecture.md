@@ -32,8 +32,6 @@ The gateway also includes Rust examples and comprehensive Python integration tes
 - [src/config](../../src/config/) configuration via FlatBuffers
 - [src/socom/](../../src/socom/) - SOME/IP abstraction with plugin interface for IPC binding
 - [src/someipd/](../../src/someipd/) - SOME/IP binding layer
-- [src/network_service/interfaces/](../../src/network_service/interfaces/) - Network abstraction (message_transfer.h)
-- [examples/car_window_sim/](../../examples/car_window_sim/) - Complete working Rust example
 
 ## Design Patterns
 
