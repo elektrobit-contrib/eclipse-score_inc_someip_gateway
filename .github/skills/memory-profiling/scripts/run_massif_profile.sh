@@ -73,7 +73,7 @@ info "Binary ready: ${BINARY_PATH}"
 #  --tool=massif : heap profiler
 #  --trace-children=yes : needed for programs that fork/re-exec
 #  --massif-out-file : specify output location
-OUTPUT_FILE="massif.out"
+OUTPUT_FILE="massif.out.1"
 
 info "Running Valgrind Massif..."
 info "Output will be written to: ${OUTPUT_FILE}"
