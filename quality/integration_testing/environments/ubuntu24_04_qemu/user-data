@@ -4,6 +4,11 @@
 
 ssh_pwauth: true
 
+package_update: true
+packages:
+  - iputils-ping
+  - libatomic1
+
 write_files:
   - path: /etc/netplan/99-score-itf.yaml
     permissions: "0600"
