@@ -71,9 +71,17 @@ pkg_tar(
 )
 
 copy_files_onto_image(
-    name = "_qemu_rootfs_test_hello_world_ebclfsa_aarch64_integration_test",
+    name = "_qemu_rootfs_overlay_test_hello_world_ebclfsa_aarch64_integration_test",
     srcs = [":_qemu_filesystem_test_hello_world_ebclfsa_aarch64_integration_test"],
     image = "//quality/integration_testing/environments/ebclfsa_aarch64_qemu:image",
+)
+
+genrule(
+    name = "_qemu_rootfs_test_hello_world_ebclfsa_aarch64_integration_test",
+    srcs = [":_qemu_rootfs_overlay_test_hello_world_ebclfsa_aarch64_integration_test"],
+    outs = ["_qemu_rootfs_test_hello_world_ebclfsa_aarch64_integration_test.qcow2"],
+    cmd = "qemu-img convert -O qcow2 $(location :_qemu_rootfs_overlay_test_hello_world_ebclfsa_aarch64_integration_test) $@",
+    local = True,
 )
 
 qnx_ifs(

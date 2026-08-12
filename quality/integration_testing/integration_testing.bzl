@@ -14,9 +14,8 @@
 """Integration test macro with QEMU-only backends."""
 
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
-load("@score_itf//:defs.bzl", "py_itf_test")
+load("@score_itf//:defs.bzl", "copy_files_onto_image", "py_itf_test")
 load("@score_rules_imagefs//rules/qnx:ifs.bzl", "qnx_ifs")
-load("//quality/integration_testing:copy_files_onto_target.bzl", "copy_files_onto_target")
 
 def _extend_list_in_kwargs(kwargs, key, values):
     kwargs[key] = kwargs.get(key, []) + values
@@ -60,11 +59,20 @@ def integration_test(name, srcs, filesystem, **kwargs):
     linux_qemu_config = Label("//quality/integration_testing/environments/ubuntu24_04_qemu:qemu_config")
     linux_qemu_image = Label("//quality/integration_testing/environments/ubuntu24_04_qemu:prepared_image")
 
-    filesystem_rootfs = "_qemu_rootfs_{}".format(name)
-    copy_files_onto_target(
-        name = filesystem_rootfs,
+    filesystem_rootfs_overlay = "_qemu_rootfs_overlay_{}".format(name)
+    copy_files_onto_image(
+        name = filesystem_rootfs_overlay,
         image = linux_qemu_image,
         srcs = [filesystem_tar],
+    )
+
+    filesystem_rootfs = "_qemu_rootfs_{}".format(name)
+    native.genrule(
+        name = filesystem_rootfs,
+        srcs = [filesystem_rootfs_overlay],
+        outs = ["{}.qcow2".format(filesystem_rootfs)],
+        cmd = "qemu-img convert -O qcow2 $(location {}) $@".format(filesystem_rootfs_overlay),
+        local = True,
     )
 
     # --- QNX QEMU artifacts ---
