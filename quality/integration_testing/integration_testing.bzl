@@ -101,7 +101,6 @@ def integration_test(name, srcs, filesystem, **kwargs):
                 "--log-cli-level=DEBUG",
                 "--qemu-config=$(location {})".format(qnx_qemu_config),
                 "--qemu-kernel=$(location {})".format(qemu_image),
-                "--qemu-architecture=x86_64",
             ],
             "//quality/integration_testing/flags:linux_qemu": [
                 "--log-cli-level=DEBUG",
