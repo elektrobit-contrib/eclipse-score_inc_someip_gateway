@@ -18,7 +18,6 @@ exports_files(
         "user-data",
         "meta-data",
         "build_image.sh",
-        "render_user_data.py",
     ],
     visibility = ["//:__subpackages__"],
 )
@@ -36,7 +35,7 @@ genrule(
     srcs = [
         "@ubuntu_24_04_cloudimg//file",
         "build_image.sh",
-        "render_user_data.py",
+        "@score_itf//test/resources/ubuntu_x86_64:render_user_data.py",
         "user-data",
         "meta-data",
         "qemu_config.json",
@@ -50,7 +49,7 @@ genrule(
             $(location user-data) \
             $(location meta-data) \
             $(location qemu_config.json) \
-            $(location render_user_data.py)
+            $(location @score_itf//test/resources/ubuntu_x86_64:render_user_data.py)
     """,
     tags = [
         "manual",
@@ -58,7 +57,7 @@ genrule(
     ],
     tools = [
         "build_image.sh",
-        "render_user_data.py",
+        "@score_itf//test/resources/ubuntu_x86_64:render_user_data.py",
     ],
     visibility = ["//:__subpackages__"],
 )

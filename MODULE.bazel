@@ -317,6 +317,11 @@ bazel_dep(name = "score_rules_imagefs", version = "0.0.3", dev_dependency = True
 git_override(
     module_name = "score_itf",
     commit = "a72edafbef1a0ad573022690d5003a15bb0567d6",
+    patch_strip = 1,
+    patches = [
+        "//third_party/score_itf:rules_pkg_non_dev.patch",
+        "//third_party/score_itf:export_render_user_data.patch",
+    ],
     remote = "https://github.com/elektrobit-contrib/eclipse-score_itf.git",
 )
 

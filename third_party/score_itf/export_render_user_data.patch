@@ -1,0 +1,13 @@
+--- a/test/resources/ubuntu_x86_64/BUILD	2026-08-12 13:17:21.857902913 +0000
++++ b/test/resources/ubuntu_x86_64/BUILD	2026-08-12 13:17:21.859356713 +0000
+@@ -89,3 +89,10 @@
+     srcs = ["qemu_config.json"],
+     visibility = ["//:__subpackages__"],
+ )
++
++exports_files(
++    [
++        "render_user_data.py",
++    ],
++    visibility = ["//visibility:public"],
++)
