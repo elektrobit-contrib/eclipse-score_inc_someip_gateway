@@ -13,21 +13,16 @@
 
 import logging
 from util import (
-    wait_until_output_contains,
+    tcpdump_capture,
+    wait_until_process_exits,
 )
-from conftest import GatewaydWithSomeipdSession
+from score.itf.plugins.core import Target
 
 
-def test_start_someipd_and_gatewayd(
-    gatewayd_with_someipd: GatewaydWithSomeipdSession,
-) -> None:
-    """Verify that someipd schedules and offers the SOME/IP service-discovery advertisement."""
-    console_output = wait_until_output_contains(
-        gatewayd_with_someipd.someipd_process,
-        [
-            "rmi::offer_service: added service 0x1234 to pending_sd_offers_.size = 2",
-            "OFFER(0100): [1234.5678:0.0] (true)",
-        ],
-        timeout=10.0,
-    )
-    logging.info("someipd output confirming SOME/IP-SD offer...\n" + console_output)
+def test_start_someipd_and_gatewayd(gatewayd_with_someipd: Target) -> None:
+    """Same as above but with more complex test fixture"""
+    with tcpdump_capture("udp port 30490", packet_count=1) as tcpdump_process:
+        console_output = wait_until_process_exits(tcpdump_process, timeout=10.0)
+        logging.info(
+            "Final tcpdump to capture SOME/IP-SD traffic...\n" + console_output
+        )

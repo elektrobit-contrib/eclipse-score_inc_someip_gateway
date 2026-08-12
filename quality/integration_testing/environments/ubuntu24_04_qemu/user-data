@@ -31,6 +31,8 @@ write_files:
               - to: default
                 via: __SCORE_ITF_GATEWAY__
                 on-link: true
+              - to: 224.0.0.0/4
+                scope: link
 
   - path: /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
     permissions: "0644"
