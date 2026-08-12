@@ -11,8 +11,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
-load("@score_itf//bazel:copy_files_onto_image.bzl", "copy_files_onto_image")
 
 exports_files(
     [
@@ -62,28 +60,5 @@ genrule(
         "build_image.sh",
         "render_user_data.py",
     ],
-    visibility = ["//:__subpackages__"],
-)
-
-pkg_tar(
-    name = "overlay_files",
-    srcs = ["overlay/score_itf_overlay_marker"],
-    mode = "0644",
-    package_dir = "/etc/score_itf",
-)
-
-copy_files_onto_image(
-    name = "image_with_overlay",
-    srcs = [":overlay_files"],
-    out = "ubuntu24_04_prepared.overlay.qcow2",
-    image = ":prepared_image",
-    tags = ["manual"],
-    visibility = ["//visibility:private"],
-)
-
-filegroup(
-    name = "image_overlay",
-    srcs = [":image_with_overlay"],
-    tags = ["manual"],
     visibility = ["//:__subpackages__"],
 )
