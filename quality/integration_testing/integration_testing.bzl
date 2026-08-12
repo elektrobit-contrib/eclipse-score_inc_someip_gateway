@@ -151,7 +151,7 @@ def integration_test(name, srcs, filesystem, **kwargs):
                 "@score_itf//score/itf/plugins:qemu_plugin",
             ],
             "//quality/integration_testing/flags:linux_qemu": [
-                "//quality/integration_testing/plugins:qemu_compat_plugin",
+                "@score_itf//score/itf/plugins:qemu_plugin",
             ],
             "//conditions:default": [],
         }),
