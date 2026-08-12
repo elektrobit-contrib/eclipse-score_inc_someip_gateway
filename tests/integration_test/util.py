@@ -145,6 +145,54 @@ def wait_until_process_exits(
     )
 
 
+def stop_local_process(process: subprocess.Popen[bytes], timeout: float = 1.0) -> None:
+    if process.poll() is not None:
+        return
+
+    try:
+        process.terminate()
+    except PermissionError:
+        return
+    except ProcessLookupError:
+        return
+
+    try:
+        process.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        try:
+            process.kill()
+        except PermissionError:
+            return
+        except ProcessLookupError:
+            return
+        process.wait(timeout=timeout)
+
+
+def wait_until_output_contains(
+    process: AsyncProcess,
+    expected_output: str | Sequence[str],
+    timeout: float = 10.0,
+) -> str:
+    expected_texts = (
+        [expected_output] if isinstance(expected_output, str) else list(expected_output)
+    )
+    start_time = time.time()
+    last_output = ""
+
+    while time.time() - start_time < timeout:
+        last_output = process.get_output()
+        if all(expected_text in last_output for expected_text in expected_texts):
+            return last_output
+        if not process.is_running():
+            break
+        time.sleep(0.5)
+
+    raise TimeoutError(
+        "Process output did not contain the expected text within "
+        f"{timeout} seconds. Last output: {last_output}"
+    )
+
+
 def get_running_processes_on_host() -> str:
     ps_aux_result = subprocess.run(
         ["ps", "aux"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE

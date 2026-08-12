@@ -11,31 +11,23 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-exports_files(
-    [
-        "qemu_config.json",
-    ],
-    visibility = ["//:__subpackages__"],
-)
+load("@rules_python//python:defs.bzl", "py_library")
+load("@score_itf//bazel:py_itf_plugin.bzl", "py_itf_plugin")
 
-filegroup(
-    name = "qemu_config",
-    srcs = ["qemu_config.json"],
-    visibility = ["//:__subpackages__"],
-)
-
-# Convenience alias for accessing the image
-alias(
-    name = "image",
-    actual = "//quality/integration_testing/images/ebclfsa_aarch64:image",
-    tags = ["manual"],
+py_library(
+    name = "qemu_compat",
+    srcs = ["qemu_compat.py"],
     visibility = ["//visibility:public"],
+    deps = [
+        "@score_itf//score/itf/plugins/qemu",
+    ],
 )
 
-# Convenience alias for accessing the kernel image
-alias(
-    name = "kernel",
-    actual = "//quality/integration_testing/images/ebclfsa_aarch64:kernel",
-    tags = ["manual"],
+py_itf_plugin(
+    name = "qemu_compat_plugin",
+    enabled_plugins = [
+        "quality.integration_testing.plugins.qemu_compat",
+    ],
+    py_library = ":qemu_compat",
     visibility = ["//visibility:public"],
 )

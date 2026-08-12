@@ -18,6 +18,18 @@ Integration Tests
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
 load("//quality/integration_testing:integration_testing.bzl", "integration_test")
 
+genrule(
+    name = "host_libatomic_so_1",
+    outs = ["libatomic.so.1"],
+    cmd = "cp /usr/lib/x86_64-linux-gnu/libatomic.so.1 $@",
+)
+
+genrule(
+    name = "host_ping_bin",
+    outs = ["ping"],
+    cmd = "cp /usr/bin/ping $@",
+)
+
 pkg_files(
     name = "vsomeip-runtime-pkg",
     srcs = [
@@ -32,6 +44,8 @@ pkg_files(
 pkg_files(
     name = "example-app-pkg",
     srcs = [
+        ":host_libatomic_so_1",
+        ":host_ping_bin",
         ":vsomeip.json",
         ":vsomeip-runtime-pkg",
         "//score/config:config_file",
@@ -46,6 +60,8 @@ pkg_files(
     ),
     prefix = "/",
     renames = {
+        ":host_libatomic_so_1": "lib/x86_64-linux-gnu/libatomic.so.1",
+        ":host_ping_bin": "usr/bin/ping",
         "//score/config:config_file": "mw_someip_config.bin",
         "//score/gatewayd:etc/mw_com_config.json": "gatewayd_mw_com_config.json",
     },
