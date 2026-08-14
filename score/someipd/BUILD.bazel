@@ -19,6 +19,16 @@ load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
+filegroup(
+    name = "public_headers",
+    srcs = [
+        "local_network_service.h",
+        "remote_network_service.h",
+        "routing.h",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 # ============================================================================
 # Main Binary
 # ============================================================================

@@ -17,6 +17,16 @@ Common types and constants shared across the SOME/IP gateway components.
 
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
+filegroup(
+    name = "public_headers",
+    srcs = [
+        "include/score/someip/constants.h",
+        "include/score/someip/someip_error.h",
+        "include/score/someip/types.h",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 cc_library(
     name = "common",
     hdrs = [

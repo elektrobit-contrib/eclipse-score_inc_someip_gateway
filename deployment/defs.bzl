@@ -35,6 +35,22 @@ def _names_from_toolchains_impl(ctx):
 
     return PackageVariablesInfo(values = values)
 
+def _deb_architecture_file_impl(ctx):
+    # TODO(https://github.com/bazelbuild/bazel/issues/7260): Switch from
+    # calling find_cc_toolchain to direct lookup via the name.
+    cc_toolchain = find_cc_toolchain(ctx)
+
+    cpu_to_arch = {
+        "aarch64": "arm64",
+        "x86_64": "amd64",
+    }
+    deb_arch = cpu_to_arch.get(cc_toolchain.cpu, cc_toolchain.cpu)
+
+    output = ctx.actions.declare_file(ctx.label.name + ".txt")
+    ctx.actions.write(output = output, content = deb_arch)
+
+    return DefaultInfo(files = depset([output]))
+
 def scoreipgw_pkg_tar(name, srcs, package_dir):
     """Creates a platform-aware deployment tar package.
 
@@ -77,4 +93,16 @@ names_from_toolchains = rule(
     },
     toolchains = ["@rules_cc//cc:toolchain_type"],
     implementation = _names_from_toolchains_impl,
+)
+
+deb_architecture_file = rule(
+    attrs = {
+        "_cc_toolchain": attr.label(
+            default = Label(
+                "@rules_cc//cc:current_cc_toolchain",
+            ),
+        ),
+    },
+    toolchains = ["@rules_cc//cc:toolchain_type"],
+    implementation = _deb_architecture_file_impl,
 )

@@ -33,11 +33,17 @@
 # Repeat with a different --config to produce packages for another platform.
 # =============================================================================
 
-load("@rules_pkg//pkg:mappings.bzl", "pkg_files")
-load(":defs.bzl", "names_from_toolchains", "scoreipgw_pkg_tar")
+load("@rules_pkg//pkg:deb.bzl", "pkg_deb")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_filegroup", "pkg_files", "strip_prefix")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load(":defs.bzl", "deb_architecture_file", "names_from_toolchains", "scoreipgw_pkg_tar")
 
 names_from_toolchains(
     name = "toolchain_vars",
+)
+
+deb_architecture_file(
+    name = "deb_architecture",
 )
 
 # Config files are renamed and flattened to the package root so that
@@ -100,6 +106,137 @@ filegroup(
     srcs = [
         ":benchmarks_tar",
         ":gateway_tar",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# =============================================================================
+# Debian packaging
+# =============================================================================
+
+filegroup(
+    name = "base_dependency_artifacts",
+    srcs = [
+        "@score_baselibs//score/containers:non_relocatable_vector",
+        "@score_baselibs//score/filesystem",
+        "@score_baselibs//score/language/futurecpp",
+        "@score_baselibs//score/memory/shared",
+        "@score_baselibs//score/mw/log",
+        "@score_baselibs//score/result",
+        "@score_communication//score/message_passing",
+        "@score_communication//score/mw/com",
+        "@vsomeip",
+    ],
+)
+
+pkg_files(
+    name = "s_core_base_libs",
+    srcs = [":base_dependency_artifacts"],
+    prefix = "usr/lib/s-core-base",
+    strip_prefix = strip_prefix.files_only(),
+)
+
+pkg_filegroup(
+    name = "s_core_base_pkg_files",
+    srcs = [":s_core_base_libs"],
+)
+
+pkg_tar(
+    name = "s_core_base_data_tar",
+    srcs = [":s_core_base_pkg_files"],
+    extension = "tar",
+)
+
+pkg_deb(
+    name = "s_core_base_deb",
+    architecture_file = ":deb_architecture",
+    data = ":s_core_base_data_tar",
+    description = "S-CORE base binary artifacts required by SOME/IP Gateway.",
+    maintainer = "S-CORE SOME/IP Gateway Team <score@example.com>",
+    package = "s-core-base",
+    section = "libs",
+    version = "0.1.0",
+)
+
+pkg_files(
+    name = "someip_gateway_binaries",
+    srcs = [
+        "//score/gatewayd",
+        "//score/someipd",
+    ],
+    attributes = pkg_attributes(mode = "0755"),
+    prefix = "usr/bin",
+)
+
+pkg_files(
+    name = "someip_gateway_serializer",
+    srcs = ["//score/serializer:null_serializer"],
+    prefix = "usr/lib/someip-gateway",
+    strip_prefix = strip_prefix.files_only(),
+)
+
+pkg_files(
+    name = "someip_gateway_headers",
+    srcs = [
+        "//score/common:public_headers",
+        "//score/gateway_ipc_binding:public_headers",
+        "//score/gatewayd:public_headers",
+        "//score/serializer:public_headers",
+        "//score/socom:headers",
+        "//score/someipd:public_headers",
+    ],
+    prefix = "usr/include/someip-gateway",
+    strip_prefix = strip_prefix.from_root(""),
+)
+
+pkg_files(
+    name = "someip_gateway_config",
+    srcs = [":gatewayd_config_files"],
+    prefix = "etc/someip-gateway",
+)
+
+pkg_files(
+    name = "someip_gateway_launcher",
+    srcs = ["run_gateway.sh"],
+    attributes = pkg_attributes(mode = "0755"),
+    prefix = "usr/lib/someip-gateway",
+    strip_prefix = strip_prefix.files_only(),
+)
+
+pkg_filegroup(
+    name = "someip_gateway_pkg_files",
+    srcs = [
+        ":someip_gateway_binaries",
+        ":someip_gateway_config",
+        ":someip_gateway_headers",
+        ":someip_gateway_launcher",
+        ":someip_gateway_serializer",
+    ],
+)
+
+pkg_tar(
+    name = "someip_gateway_data_tar",
+    srcs = [":someip_gateway_pkg_files"],
+    extension = "tar",
+)
+
+pkg_deb(
+    name = "someip_gateway_deb",
+    architecture_file = ":deb_architecture",
+    data = ":someip_gateway_data_tar",
+    depends = ["s-core-base (>= 0.1.0)"],
+    description = "SOME/IP Gateway binaries and headers.",
+    maintainer = "S-CORE SOME/IP Gateway Team <score@example.com>",
+    package = "someip-gateway",
+    section = "net",
+    version = "0.1.0",
+)
+
+filegroup(
+    name = "all_debs",
+    srcs = [
+        ":s_core_base_deb",
+        ":someip_gateway_deb",
     ],
     visibility = ["//visibility:public"],
 )

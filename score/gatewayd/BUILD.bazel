@@ -26,6 +26,15 @@ exports_files(
     ],
 )
 
+filegroup(
+    name = "public_headers",
+    srcs = [
+        "local_service_instance.h",
+        "remote_service_instance.h",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 cc_binary(
     name = "gatewayd",
     srcs = ["main.cpp"],
