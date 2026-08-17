@@ -18,12 +18,10 @@ Common types and constants shared across the SOME/IP gateway components.
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 filegroup(
-    name = "public_headers",
-    srcs = [
-        "constants.h",
-        "someip_error.h",
-        "types.h",
-    ],
+    name = "headers",
+    srcs = glob([
+        "*.h",
+    ]),
     visibility = ["//visibility:public"],
 )
 
