@@ -42,6 +42,7 @@ def _deb_architecture_file_impl(ctx):
 
     cpu_to_arch = {
         "aarch64": "arm64",
+        "k8": "amd64",
         "x86_64": "amd64",
     }
     deb_arch = cpu_to_arch.get(cc_toolchain.cpu, cc_toolchain.cpu)

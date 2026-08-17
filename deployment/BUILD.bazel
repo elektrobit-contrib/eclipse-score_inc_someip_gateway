@@ -136,9 +136,18 @@ pkg_files(
     strip_prefix = strip_prefix.files_only(),
 )
 
+pkg_files(
+    name = "s_core_base_loader_configuration",
+    srcs = ["s-core-base.conf"],
+    prefix = "etc/ld.so.conf.d",
+)
+
 pkg_filegroup(
     name = "s_core_base_pkg_files",
-    srcs = [":s_core_base_libs"],
+    srcs = [
+        ":s_core_base_libs",
+        ":s_core_base_loader_configuration",
+    ],
 )
 
 pkg_tar(
@@ -155,7 +164,9 @@ pkg_deb(
     maintainer = "S-CORE SOME/IP Gateway Team <score@example.com>",
     package = "s-core-base",
     section = "libs",
+    triggers = "s-core-base.triggers",
     version = "0.1.0",
+    visibility = ["//tests/integration_test:__pkg__"],
 )
 
 pkg_files(
@@ -171,7 +182,7 @@ pkg_files(
 pkg_files(
     name = "someip_gateway_serializer",
     srcs = ["//score/serializer:null_serializer"],
-    prefix = "usr/lib/someip-gateway",
+    prefix = "usr/lib",
     strip_prefix = strip_prefix.files_only(),
 )
 
@@ -183,7 +194,7 @@ pkg_files(
         "//score/socom:headers",
         "//score/someip:headers",
     ],
-    prefix = "usr/include/someip-gateway",
+    prefix = "usr/include",
     strip_prefix = strip_prefix.from_root(""),
 )
 
@@ -193,21 +204,12 @@ pkg_files(
     prefix = "etc/someip-gateway",
 )
 
-pkg_files(
-    name = "someip_gateway_launcher",
-    srcs = ["run_gateway.sh"],
-    attributes = pkg_attributes(mode = "0755"),
-    prefix = "usr/lib/someip-gateway",
-    strip_prefix = strip_prefix.files_only(),
-)
-
 pkg_filegroup(
     name = "someip_gateway_pkg_files",
     srcs = [
         ":someip_gateway_binaries",
         ":someip_gateway_config",
         ":someip_gateway_headers",
-        ":someip_gateway_launcher",
         ":someip_gateway_serializer",
     ],
 )
@@ -228,6 +230,7 @@ pkg_deb(
     package = "someip-gateway",
     section = "net",
     version = "0.1.0",
+    visibility = ["//tests/integration_test:__pkg__"],
 )
 
 filegroup(

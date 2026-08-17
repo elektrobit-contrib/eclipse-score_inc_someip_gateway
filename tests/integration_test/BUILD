@@ -51,6 +51,19 @@ pkg_files(
     },
 )
 
+pkg_files(
+    name = "debian-packages-pkg",
+    srcs = [
+        "//deployment:s_core_base_deb",
+        "//deployment:someip_gateway_deb",
+    ],
+    prefix = "/packages",
+    renames = {
+        "//deployment:s_core_base_deb": "s-core-base.deb",
+        "//deployment:someip_gateway_deb": "someip-gateway.deb",
+    },
+)
+
 integration_test(
     name = "test_tcpdump",
     timeout = "moderate",
@@ -59,6 +72,20 @@ integration_test(
         "util.py",
     ],
     filesystem = ":example-app-pkg",
+    deps = [
+        "@score_someip_gateway_pip//pytest",
+    ],
+)
+
+integration_test(
+    name = "test_debian_packages",
+    timeout = "moderate",
+    srcs = [
+        "conftest.py",
+        "debian_packages.py",
+        "util.py",
+    ],
+    filesystem = ":debian-packages-pkg",
     deps = [
         "@score_someip_gateway_pip//pytest",
     ],
