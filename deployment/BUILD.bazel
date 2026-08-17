@@ -178,12 +178,10 @@ pkg_files(
 pkg_files(
     name = "someip_gateway_headers",
     srcs = [
-        "//score/common:public_headers",
-        "//score/gateway_ipc_binding:public_headers",
-        "//score/gatewayd:public_headers",
+        "//score/gateway_ipc_binding:headers",
         "//score/serializer:public_headers",
         "//score/socom:headers",
-        "//score/someipd:public_headers",
+        "//score/someip:public_headers",
     ],
     prefix = "usr/include/someip-gateway",
     strip_prefix = strip_prefix.from_root(""),

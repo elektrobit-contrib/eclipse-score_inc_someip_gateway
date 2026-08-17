@@ -15,20 +15,18 @@ load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@score_baselibs//score/language/safecpp:toolchain_features.bzl", "COMPILER_WARNING_FEATURES")
 
 filegroup(
-    name = "public_headers",
-    srcs = glob(include = ["include/**"]),
+    name = "headers",
+    srcs = glob([
+        "*.hpp",
+    ]),
     visibility = ["//visibility:public"],
 )
 
 cc_library(
     name = "gateway_ipc_binding",
-    srcs = glob(include = ["src/**"]),
-    hdrs = glob(include = ["include/**"]),
+    srcs = glob(include = ["impl/**"]),
+    hdrs = [":headers"],
     features = COMPILER_WARNING_FEATURES,
-    includes = [
-        "include",
-        "score/gateway_ipc_binding/include",
-    ],
     linkopts = ["-latomic"],
     visibility = ["//visibility:public"],
     deps = [
