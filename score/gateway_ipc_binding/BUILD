@@ -19,6 +19,7 @@ filegroup(
     srcs = glob([
         "*.hpp",
     ]),
+    visibility = ["//visibility:public"],
 )
 
 cc_library(
